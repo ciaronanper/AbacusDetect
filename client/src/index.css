@@ -9,28 +9,28 @@
   --font-display: 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Medical/Clean Theme - Blue & White */
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
+  /* New Theme */
+  --background: 0 0% 100%; /* #ffffff */
+  --foreground: 208 16% 24%; /* #333e47 */
   
-  --primary: 215 90% 52%; /* Bright Medical Blue */
-  --primary-foreground: 210 40% 98%;
+  --primary: 133 50% 45%; /* #3aae52 */
+  --primary-foreground: 0 0% 100%;
   
-  --secondary: 210 20% 90%;
-  --secondary-foreground: 222 47% 11%;
+  --secondary: 208 16% 24%; /* #333e47 */
+  --secondary-foreground: 0 0% 100%;
   
-  --muted: 210 20% 92%;
-  --muted-foreground: 215 16% 47%;
+  --muted: 208 16% 95%;
+  --muted-foreground: 208 16% 45%;
   
-  --accent: 180 80% 45%; /* Teal for success/positive actions */
-  --accent-foreground: 210 40% 98%;
+  --accent: 133 50% 45%;
+  --accent-foreground: 0 0% 100%;
   
   --destructive: 0 84% 60%;
-  --destructive-foreground: 210 40% 98%;
+  --destructive-foreground: 0 0% 100%;
   
-  --border: 214 32% 91%;
-  --input: 214 32% 91%;
-  --ring: 215 90% 52%;
+  --border: 208 16% 85%;
+  --input: 208 16% 85%;
+  --ring: 133 50% 45%;
   
   --radius: 1rem;
 }
