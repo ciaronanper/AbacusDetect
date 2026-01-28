@@ -27,6 +27,7 @@ import logoPng from "@assets/Vertical_logo_bgtransparent_1769613129480.png";
 type Step = 
   | "home"
   | "connecting"
+  | "nurse-auth-choice"
   | "nurse-face-id"
   | "nurse-scan"
   | "nurse-confirm"
@@ -94,10 +95,10 @@ export default function Workflow() {
     let timer: NodeJS.Timeout;
 
     if (step === "connecting") {
-      // Step 2a: Connecting (2.5s) -> Nurse Scan
+      // Step 2a: Connecting (2.5s) -> Nurse Auth Choice
       timer = setTimeout(() => {
         toast({ title: "Connected", description: "System link established." });
-        setStep("nurse-scan");
+        setStep("nurse-auth-choice");
       }, 2500);
     } else if (step === "nurse-scan") {
       // Step 3: Nurse Scan (5s) -> Nurse Confirm
@@ -200,11 +201,33 @@ export default function Workflow() {
           </div>
         );
 
+      case "nurse-auth-choice":
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
+            <StatusCard 
+              icon={UserCheck}
+              title="Nurse Authentication"
+              description="Choose how you would like to verify your identity"
+            />
+            
+            <div className="w-full space-y-4">
+              <ActionButton fullWidth onClick={() => setStep("nurse-scan")}>
+                <ScanLine className="w-5 h-5 mr-2" />
+                Nurse QR Code
+              </ActionButton>
+              <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-face-id")}>
+                <User className="w-5 h-5 mr-2" />
+                Face ID
+              </ActionButton>
+            </div>
+          </div>
+        );
+
       case "nurse-face-id":
         return (
           <FaceDetection 
-            onComplete={() => setStep("patient-scan")}
-            onCancel={() => setStep("nurse-confirm")}
+            onComplete={() => setStep("nurse-confirm")}
+            onCancel={() => setStep("nurse-auth-choice")}
           />
         );
 
@@ -242,8 +265,8 @@ export default function Workflow() {
             <div className="w-full space-y-4 pt-4">
               <p className="text-center font-medium">Correct ID?</p>
               <div className="grid grid-cols-2 gap-4">
-                <ActionButton variant="outline" onClick={() => setStep("nurse-scan")}>No</ActionButton>
-                <ActionButton variant="primary" onClick={() => setStep("nurse-face-id")}>Yes</ActionButton>
+                <ActionButton variant="outline" onClick={() => setStep("nurse-auth-choice")}>No</ActionButton>
+                <ActionButton variant="primary" onClick={() => setStep("patient-scan")}>Yes</ActionButton>
               </div>
             </div>
           </div>
