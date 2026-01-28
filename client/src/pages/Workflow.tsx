@@ -17,6 +17,7 @@ import {
 import { ActionButton } from "@/components/ActionButton";
 import { StatusCard } from "@/components/StatusCard";
 import { Header } from "@/components/Header";
+import { FaceDetection } from "@/components/FaceDetection";
 import { useCreateResult } from "@/hooks/use-results";
 import { useToast } from "@/hooks/use-toast";
 
@@ -24,6 +25,7 @@ import { useToast } from "@/hooks/use-toast";
 type Step = 
   | "home"
   | "connecting"
+  | "nurse-face-id"
   | "nurse-scan"
   | "nurse-confirm"
   | "patient-scan"
@@ -89,11 +91,10 @@ export default function Workflow() {
     let timer: NodeJS.Timeout;
 
     if (step === "connecting") {
-      // Step 2a: Connecting (5s) -> Connected
+      // Step 2a: Connecting (5s) -> Face ID
       timer = setTimeout(() => {
         toast({ title: "Connected", description: "System link established." });
-        // Step 2b: Connected (3s) -> Nurse Scan
-        setTimeout(() => setStep("nurse-scan"), 3000);
+        setStep("nurse-face-id");
       }, 5000);
     } else if (step === "nurse-scan") {
       // Step 3: Nurse Scan (10s) -> Nurse Confirm
@@ -194,6 +195,14 @@ export default function Workflow() {
               />
             </div>
           </div>
+        );
+
+      case "nurse-face-id":
+        return (
+          <FaceDetection 
+            onComplete={() => setStep("nurse-scan")}
+            onCancel={() => setStep("home")}
+          />
         );
 
       case "nurse-scan":
