@@ -91,10 +91,10 @@ export default function Workflow() {
     let timer: NodeJS.Timeout;
 
     if (step === "connecting") {
-      // Step 2a: Connecting (5s) -> Face ID
+      // Step 2a: Connecting (5s) -> Nurse Scan
       timer = setTimeout(() => {
         toast({ title: "Connected", description: "System link established." });
-        setStep("nurse-face-id");
+        setStep("nurse-scan");
       }, 5000);
     } else if (step === "nurse-scan") {
       // Step 3: Nurse Scan (10s) -> Nurse Confirm
@@ -200,8 +200,8 @@ export default function Workflow() {
       case "nurse-face-id":
         return (
           <FaceDetection 
-            onComplete={() => setStep("nurse-scan")}
-            onCancel={() => setStep("home")}
+            onComplete={() => setStep("patient-scan")}
+            onCancel={() => setStep("nurse-confirm")}
           />
         );
 
@@ -248,7 +248,7 @@ export default function Workflow() {
               <p className="text-center font-medium">Correct ID?</p>
               <div className="grid grid-cols-2 gap-4">
                 <ActionButton variant="outline" onClick={() => setStep("nurse-scan")}>No</ActionButton>
-                <ActionButton variant="primary" onClick={() => setStep("patient-scan")}>Yes</ActionButton>
+                <ActionButton variant="primary" onClick={() => setStep("nurse-face-id")}>Yes</ActionButton>
               </div>
             </div>
           </div>
