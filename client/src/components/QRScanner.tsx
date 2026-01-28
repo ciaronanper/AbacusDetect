@@ -4,13 +4,16 @@ import { Camera, ScanLine } from "lucide-react";
 interface QRScannerProps {
   label: string;
   onScan: () => void;
+  overlayImage?: string;
 }
 
-export function QRScanner({ label, onScan }: QRScannerProps) {
+export function QRScanner({ label, onScan, overlayImage }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (overlayImage) return; // Don't start camera if we have an overlay image
+
     async function startCamera() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ 
@@ -37,20 +40,28 @@ export function QRScanner({ label, onScan }: QRScannerProps) {
 
   return (
     <div className="relative w-64 h-64 bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800">
-      {error ? (
+      {error && !overlayImage ? (
         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-white bg-slate-800">
           <Camera className="w-12 h-12 mb-2 opacity-50" />
           <p className="text-xs">{error}</p>
         </div>
       ) : (
         <>
-          <video 
-            ref={videoRef} 
-            autoPlay 
-            playsInline 
-            muted 
-            className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
-          />
+          {overlayImage ? (
+            <img 
+              src={overlayImage} 
+              alt="Scan Area" 
+              className="absolute inset-0 w-full h-full object-cover" 
+            />
+          ) : (
+            <video 
+              ref={videoRef} 
+              autoPlay 
+              playsInline 
+              muted 
+              className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
+            />
+          )}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <ScanLine className="w-12 h-12 text-white/20" />
           </div>
