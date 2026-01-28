@@ -99,7 +99,6 @@ export default function Workflow() {
     if (step === "connecting") {
       // Step 2a: Connecting (2.5s) -> Nurse Auth Choice
       timer = setTimeout(() => {
-        toast({ title: "Connected", description: "System link established." });
         setStep("nurse-auth-choice");
       }, 2500);
     } else if (step === "nurse-scan") {
@@ -499,7 +498,7 @@ export default function Workflow() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      <Header />
+      <Header onLogoClick={restartWorkflow} />
       
       <main className="flex-1 px-6 pt-20 pb-8 safe-area-pb overflow-y-auto">
         <AnimatePresence mode="wait">
