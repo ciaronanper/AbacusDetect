@@ -23,6 +23,7 @@ import { useCreateResult } from "@/hooks/use-results";
 import { useToast } from "@/hooks/use-toast";
 import logoPng from "@assets/Vertical_logo_bgtransparent_1769613129480.png";
 import patientQr from "@assets/patientQR_1769614112153.webp";
+import nurseQr from "@assets/Screenshot_2026-01-28_153006_1769614259203.png";
 
 // === TYPES ===
 type Step = 
@@ -235,7 +236,11 @@ export default function Workflow() {
       case "nurse-scan":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
-            <QRScanner label="Scanning Nurse ID" onScan={() => setStep("nurse-confirm")} />
+            <QRScanner 
+              label="Scanning Nurse ID" 
+              onScan={() => setStep("nurse-confirm")} 
+              overlayImage={nurseQr}
+            />
             
             <StatusCard 
               icon={User}
