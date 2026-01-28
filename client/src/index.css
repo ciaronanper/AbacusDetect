@@ -13,7 +13,7 @@
   --background: 0 0% 100%; /* #ffffff */
   --foreground: 208 16% 24%; /* #333e47 */
   
-  --primary: 133 50% 45%; /* #3aae52 */
+  --primary: 191 100% 25%; /* #00687f */
   --primary-foreground: 0 0% 100%;
   
   --secondary: 208 16% 24%; /* #333e47 */
@@ -22,7 +22,7 @@
   --muted: 208 16% 95%;
   --muted-foreground: 208 16% 45%;
   
-  --accent: 133 50% 45%;
+  --accent: 191 100% 25%;
   --accent-foreground: 0 0% 100%;
   
   --destructive: 0 84% 60%;
@@ -30,7 +30,7 @@
   
   --border: 208 16% 85%;
   --input: 208 16% 85%;
-  --ring: 133 50% 45%;
+  --ring: 191 100% 25%;
   
   --radius: 1rem;
 }

@@ -21,6 +21,7 @@ import { FaceDetection } from "@/components/FaceDetection";
 import { QRScanner } from "@/components/QRScanner";
 import { useCreateResult } from "@/hooks/use-results";
 import { useToast } from "@/hooks/use-toast";
+import logoPng from "@assets/Vertical_logo_bgtransparent_1769613129480.png";
 
 // === TYPES ===
 type Step = 
@@ -47,6 +48,7 @@ interface TestResult {
 const MOCK_NURSE = "Jane Doe";
 const MOCK_PATIENT = "XU274";
 const TEST_DURATION_SECONDS = 300; // 5 minutes
+const SCAN_DURATION_MS = 5000;
 
 export default function Workflow() {
   const [step, setStep] = useState<Step>("home");
@@ -98,11 +100,11 @@ export default function Workflow() {
         setStep("nurse-scan");
       }, 2500);
     } else if (step === "nurse-scan") {
-      // Step 3: Nurse Scan (10s) -> Nurse Confirm
-      timer = setTimeout(() => setStep("nurse-confirm"), 10000);
+      // Step 3: Nurse Scan (5s) -> Nurse Confirm
+      timer = setTimeout(() => setStep("nurse-confirm"), SCAN_DURATION_MS);
     } else if (step === "patient-scan") {
-      // Step 5: Patient Scan (10s) -> Patient Confirm
-      timer = setTimeout(() => setStep("patient-confirm"), 10000);
+      // Step 5: Patient Scan (5s) -> Patient Confirm
+      timer = setTimeout(() => setStep("patient-confirm"), SCAN_DURATION_MS);
     } else if (step === "test-complete") {
       // Step 10: Complete (5s) -> Results
       timer = setTimeout(() => {
@@ -160,17 +162,17 @@ export default function Workflow() {
       case "home":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8">
-            <div className="text-center space-y-2">
-              <h1 className="text-3xl font-display text-primary">AbacusDetect</h1>
-              <p className="text-muted-foreground">SAA2 Reader System</p>
+            <div className="text-center space-y-4">
+              <img src={logoPng} alt="Abacus Labs" className="h-40 w-auto mx-auto object-contain" />
+              <p className="text-muted-foreground font-medium tracking-wide">SAA2 Reader System</p>
             </div>
             
             <button 
               onClick={startWorkflow}
-              className="group relative flex items-center justify-center w-40 h-40 rounded-full bg-white shadow-xl shadow-blue-900/5 border-4 border-slate-50 active:scale-95 transition-all duration-300"
+              className="group relative flex items-center justify-center w-40 h-40 rounded-full bg-white shadow-xl shadow-primary/5 border-4 border-slate-50 active:scale-95 transition-all duration-300"
             >
-              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-blue-50 to-white opacity-50" />
-              <Power className="w-16 h-16 text-primary group-hover:text-blue-600 transition-colors relative z-10" />
+              <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-primary/5 to-white opacity-50" />
+              <Power className="w-16 h-16 text-primary group-hover:scale-110 transition-transform relative z-10" />
               <span className="absolute -bottom-12 text-sm font-medium text-muted-foreground uppercase tracking-widest">
                 Power On
               </span>
