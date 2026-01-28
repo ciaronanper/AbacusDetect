@@ -18,6 +18,7 @@ import { ActionButton } from "@/components/ActionButton";
 import { StatusCard } from "@/components/StatusCard";
 import { Header } from "@/components/Header";
 import { FaceDetection } from "@/components/FaceDetection";
+import { QRScanner } from "@/components/QRScanner";
 import { useCreateResult } from "@/hooks/use-results";
 import { useToast } from "@/hooks/use-toast";
 
@@ -91,11 +92,11 @@ export default function Workflow() {
     let timer: NodeJS.Timeout;
 
     if (step === "connecting") {
-      // Step 2a: Connecting (5s) -> Nurse Scan
+      // Step 2a: Connecting (2.5s) -> Nurse Scan
       timer = setTimeout(() => {
         toast({ title: "Connected", description: "System link established." });
         setStep("nurse-scan");
-      }, 5000);
+      }, 2500);
     } else if (step === "nurse-scan") {
       // Step 3: Nurse Scan (10s) -> Nurse Confirm
       timer = setTimeout(() => setStep("nurse-confirm"), 10000);
@@ -191,7 +192,7 @@ export default function Workflow() {
                 className="h-full bg-primary"
                 initial={{ width: "0%" }}
                 animate={{ width: "100%" }}
-                transition={{ duration: 5, ease: "linear" }}
+                transition={{ duration: 2.5, ease: "linear" }}
               />
             </div>
           </div>
@@ -208,15 +209,7 @@ export default function Workflow() {
       case "nurse-scan":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
-            <div className="relative w-64 h-64 bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <ScanLine className="w-12 h-12 text-white/20" />
-              </div>
-              <div className="absolute top-0 left-0 right-0 h-1 bg-green-500/80 shadow-[0_0_20px_rgba(34,197,94,0.6)] animate-scan" />
-              <div className="absolute bottom-4 left-0 right-0 text-center">
-                 <p className="text-white/80 text-sm font-mono">SCANNING ID BARCODE</p>
-              </div>
-            </div>
+            <QRScanner label="Scanning Nurse ID" onScan={() => setStep("nurse-confirm")} />
             
             <StatusCard 
               icon={User}
@@ -257,15 +250,7 @@ export default function Workflow() {
       case "patient-scan":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
-            <div className="relative w-64 h-64 bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800">
-              <div className="absolute inset-0 flex items-center justify-center">
-                <ScanLine className="w-12 h-12 text-white/20" />
-              </div>
-              <div className="absolute top-0 left-0 right-0 h-1 bg-blue-500/80 shadow-[0_0_20px_rgba(59,130,246,0.6)] animate-scan" />
-              <div className="absolute bottom-4 left-0 right-0 text-center">
-                 <p className="text-white/80 text-sm font-mono">SCANNING PATIENT ID</p>
-              </div>
-            </div>
+            <QRScanner label="Scanning Patient ID" onScan={() => setStep("patient-confirm")} />
             
             <StatusCard 
               icon={User}
