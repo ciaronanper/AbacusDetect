@@ -11,7 +11,8 @@ import {
   Timer,
   ChevronRight,
   RotateCcw,
-  AlertCircle
+  AlertCircle,
+  Activity
 } from "lucide-react";
 import { ActionButton } from "@/components/ActionButton";
 import { StatusCard } from "@/components/StatusCard";
@@ -179,7 +180,7 @@ export default function Workflow() {
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
             <StatusCard 
-              icon={Wifi}
+              icon={Activity}
               title="Connecting..."
               description="Establishing secure link to Epic Health Record System"
               status="processing"
