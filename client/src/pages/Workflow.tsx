@@ -327,7 +327,7 @@ export default function Workflow() {
             <StatusCard 
               icon={Syringe}
               title="Apply Sample"
-              description="Add 50µL of patient sample to the cartridge port"
+              description="Apply 3 drops of patient sample to cartridge well"
               status="warning"
             />
 
