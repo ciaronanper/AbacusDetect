@@ -1,0 +1,24 @@
+{
+  "short_name": "AbacusDetect",
+  "name": "Abacus Labs Diagnostic System",
+  "icons": [
+    {
+      "src": "/Vertical_logo_bgtransparent_1769613129480.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/Vertical_logo_bgtransparent_1769613129480.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#00687f",
+  "description": "Mobile diagnostic workflow for Abacus Labs."
+}
