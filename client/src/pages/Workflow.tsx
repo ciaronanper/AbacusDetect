@@ -32,6 +32,7 @@ type Step =
   | "nurse-auth-choice"
   | "nurse-face-id"
   | "nurse-scan"
+  | "nurse-id-input"
   | "nurse-confirm"
   | "patient-scan"
   | "patient-confirm"
@@ -214,11 +215,14 @@ export default function Workflow() {
             <div className="w-full space-y-4">
               <ActionButton fullWidth onClick={() => setStep("nurse-scan")}>
                 <ScanLine className="w-5 h-5 mr-2" />
-                Nurse QR Code
+                Scan Nurse QR / Barcode
               </ActionButton>
               <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-face-id")}>
                 <User className="w-5 h-5 mr-2" />
                 Face ID
+              </ActionButton>
+              <ActionButton variant="ghost" fullWidth onClick={() => setStep("nurse-id-input")} className="text-muted-foreground">
+                Input Nurse ID number
               </ActionButton>
             </div>
           </div>
@@ -236,7 +240,7 @@ export default function Workflow() {
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
             <QRScanner 
-              label="Scanning Nurse ID" 
+              label="Scanning Nurse QR / Barcode" 
               onScan={() => setStep("nurse-confirm")} 
               overlayImage={nurseQr}
             />
@@ -249,6 +253,33 @@ export default function Workflow() {
             
             {/* Hidden debug button to skip wait */}
             <button onClick={() => setStep("nurse-confirm")} className="opacity-0 h-10">Skip</button>
+          </div>
+        );
+
+      case "nurse-id-input":
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-display font-bold">Nurse ID Entry</h2>
+              <p className="text-muted-foreground">Please enter your 6-digit staff number</p>
+            </div>
+
+            <div className="w-full flex justify-center gap-2">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="w-10 h-14 bg-card border-2 border-border rounded-xl flex items-center justify-center">
+                  <span className="text-2xl font-mono font-bold text-primary">•</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="w-full space-y-4 pt-8">
+              <ActionButton fullWidth onClick={() => setStep("nurse-confirm")}>
+                Confirm Identity
+              </ActionButton>
+              <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-auth-choice")}>
+                Back
+              </ActionButton>
+            </div>
           </div>
         );
 
