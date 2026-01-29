@@ -189,7 +189,7 @@ export default function Workflow() {
             <StatusCard 
               icon={Activity}
               title="Connecting..."
-              description="Establishing secure link to Epic Health Record System"
+              description="Establishing secure link to Electronic Health Record System"
               status="processing"
             />
             <div className="w-full max-w-xs bg-secondary/50 rounded-full h-2 overflow-hidden">

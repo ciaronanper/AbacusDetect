@@ -33,10 +33,13 @@ export function QRScanner({ label, onScan, overlayImage }: QRScannerProps) {
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach(track => {
+          track.stop();
+          console.log(`Stopped QR track: ${track.label}`);
+        });
       }
     };
-  }, []);
+  }, [overlayImage]);
 
   return (
     <div className="relative w-64 h-64 bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800">

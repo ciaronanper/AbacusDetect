@@ -33,11 +33,12 @@ export function FaceDetection({ onComplete, onCancel }: FaceDetectionProps) {
     startCamera();
 
     return () => {
+      console.log("Cleaning up FaceDetection camera stream");
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, []);
+  }, [stream]);
 
   const handleScan = () => {
     setStatus("scanning");
