@@ -391,12 +391,9 @@ export default function Workflow() {
               <p className="text-2xl font-mono font-bold text-foreground mt-1">{confirmedNurseId}</p>
             </div>
 
-            <div className="w-full space-y-4 pt-4">
-              <p className="text-center font-medium">Correct ID?</p>
-              <div className="grid grid-cols-2 gap-4">
-                <ActionButton variant="outline" onClick={() => setStep("nurse-scan")}>No</ActionButton>
-                <ActionButton variant="primary" onClick={() => setStep("patient-scan")}>Yes</ActionButton>
-              </div>
+            <div className="w-full grid grid-cols-2 gap-4 pt-4">
+              <ActionButton variant="outline" onClick={() => setStep("nurse-scan")} data-testid="button-nurse-retry">Retry</ActionButton>
+              <ActionButton variant="primary" onClick={() => setStep("patient-scan")} data-testid="button-nurse-confirm">Confirm</ActionButton>
             </div>
           </div>
         );
@@ -436,12 +433,9 @@ export default function Workflow() {
               <p className="text-2xl font-mono font-bold text-foreground mt-1">{MOCK_PATIENT}</p>
             </div>
 
-            <div className="w-full space-y-4 pt-4">
-              <p className="text-center font-medium">Correct ID?</p>
-              <div className="grid grid-cols-2 gap-4">
-                <ActionButton variant="outline" onClick={() => setStep("patient-scan")} data-testid="button-patient-confirm-no">No</ActionButton>
-                <ActionButton variant="primary" onClick={() => setStep("vitals-choice")} data-testid="button-patient-confirm-yes">Yes</ActionButton>
-              </div>
+            <div className="w-full grid grid-cols-2 gap-4 pt-4">
+              <ActionButton variant="outline" onClick={() => setStep("patient-scan")} data-testid="button-patient-retry">Retry</ActionButton>
+              <ActionButton variant="primary" onClick={() => setStep("vitals-choice")} data-testid="button-patient-confirm">Confirm</ActionButton>
             </div>
           </div>
         );
