@@ -70,7 +70,7 @@ interface Vitals {
 }
 
 // === CONSTANTS ===
-const generateRandomId = () => {
+const generatePatientId = () => {
   const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const l1 = letters[Math.floor(Math.random() * 26)];
   const l2 = letters[Math.floor(Math.random() * 26)];
@@ -78,8 +78,11 @@ const generateRandomId = () => {
   return `${l1}${l2}${num}`;
 };
 
-const MOCK_NURSE = generateRandomId();
-const MOCK_PATIENT = generateRandomId();
+const generateNurseId = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString(); // 6 digits
+};
+
+const MOCK_PATIENT = generatePatientId();
 const TEST_DURATION_SECONDS = 300; // 5 minutes
 const SCAN_DURATION_MS = 5000;
 
@@ -87,7 +90,8 @@ export default function Workflow() {
   const [step, setStep] = useState<Step>("home");
   const [timeLeft, setTimeLeft] = useState(0);
   const [result, setResult] = useState<TestResult | null>(null);
-  const [nurseId, setNurseId] = useState("");
+  const [nurseIdInput, setNurseIdInput] = useState("");
+  const [confirmedNurseId, setConfirmedNurseId] = useState("");
   const [resultNote, setResultNote] = useState("");
   const [resultDateTime, setResultDateTime] = useState<Date | null>(null);
   const [vitals, setVitals] = useState<Vitals>({ temperature: "", spO2: "", respiratoryRate: "" });
@@ -157,7 +161,7 @@ export default function Workflow() {
         
         // Optimistically save result
         createResult.mutate({
-          nurseId: MOCK_NURSE,
+          nurseId: confirmedNurseId,
           patientId: MOCK_PATIENT,
           saa2Value: newResult.saa2,
           level: newResult.level,
@@ -286,7 +290,10 @@ export default function Workflow() {
       case "nurse-face-id":
         return (
           <FaceDetection 
-            onComplete={() => setStep("nurse-confirm")}
+            onComplete={() => {
+              setConfirmedNurseId(generateNurseId());
+              setStep("nurse-confirm");
+            }}
             onCancel={() => setStep("nurse-auth-choice")}
           />
         );
@@ -296,7 +303,10 @@ export default function Workflow() {
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
             <QRScanner 
               label="Scanning Nurse QR / Barcode" 
-              onScan={() => setStep("nurse-confirm")} 
+              onScan={() => {
+                setConfirmedNurseId(generateNurseId());
+                setStep("nurse-confirm");
+              }} 
               overlayImage={nurseQr}
             />
             
@@ -307,7 +317,10 @@ export default function Workflow() {
             />
             
             {/* Hidden debug button to skip wait */}
-            <button onClick={() => setStep("nurse-confirm")} className="opacity-0 h-10">Skip</button>
+            <button onClick={() => {
+              setConfirmedNurseId(generateNurseId());
+              setStep("nurse-confirm");
+            }} className="opacity-0 h-10">Skip</button>
           </div>
         );
 
@@ -322,9 +335,9 @@ export default function Workflow() {
             <label className="p-6 rounded-3xl border-4 border-primary shadow-2xl bg-card/50 cursor-text">
               <div className="flex justify-center gap-2">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className={`w-10 h-14 bg-card border-2 rounded-xl flex items-center justify-center ${i === nurseId.length ? "border-primary" : "border-border"}`}>
+                  <div key={i} className={`w-10 h-14 bg-card border-2 rounded-xl flex items-center justify-center ${i === nurseIdInput.length ? "border-primary" : "border-border"}`}>
                     <span className="text-2xl font-mono font-bold text-primary">
-                      {nurseId[i] ? "•" : ""}
+                      {nurseIdInput[i] ? "•" : ""}
                     </span>
                   </div>
                 ))}
@@ -334,10 +347,10 @@ export default function Workflow() {
                 inputMode="numeric"
                 pattern="[0-9]*"
                 maxLength={6}
-                value={nurseId}
+                value={nurseIdInput}
                 onChange={(e) => {
                   const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-                  setNurseId(value);
+                  setNurseIdInput(value);
                 }}
                 autoFocus
                 className="sr-only"
@@ -348,12 +361,15 @@ export default function Workflow() {
             <div className="w-full space-y-4 pt-8">
               <ActionButton 
                 fullWidth 
-                onClick={() => setStep("nurse-confirm")}
-                disabled={nurseId.length !== 6}
+                onClick={() => {
+                  setConfirmedNurseId(nurseIdInput);
+                  setStep("nurse-confirm");
+                }}
+                disabled={nurseIdInput.length !== 6}
               >
                 Confirm Identity
               </ActionButton>
-              <ActionButton variant="outline" fullWidth onClick={() => { setNurseId(""); setStep("nurse-auth-choice"); }}>
+              <ActionButton variant="outline" fullWidth onClick={() => { setNurseIdInput(""); setStep("nurse-auth-choice"); }}>
                 Back
               </ActionButton>
             </div>
@@ -371,8 +387,8 @@ export default function Workflow() {
             />
             
             <div className="w-full bg-card border border-border p-6 rounded-2xl shadow-sm text-center">
-              <span className="text-sm text-muted-foreground uppercase tracking-wider font-bold">Nurse Name</span>
-              <p className="text-2xl font-display font-bold text-foreground mt-1">{MOCK_NURSE}</p>
+              <span className="text-sm text-muted-foreground uppercase tracking-wider font-bold">Nurse ID</span>
+              <p className="text-2xl font-mono font-bold text-foreground mt-1">{confirmedNurseId}</p>
             </div>
 
             <div className="w-full space-y-4 pt-4">
@@ -800,7 +816,7 @@ export default function Workflow() {
                   </div>
                   <div>
                     <span className="block font-bold">Nurse</span>
-                    <span>{MOCK_NURSE}</span>
+                    <span className="font-mono">{confirmedNurseId}</span>
                   </div>
                   {resultDateTime && (
                     <>
