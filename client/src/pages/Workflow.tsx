@@ -336,8 +336,8 @@ export default function Workflow() {
               <div className="flex justify-center gap-2">
                 {[...Array(6)].map((_, i) => (
                   <div key={i} className={`w-10 h-14 bg-card border-2 rounded-xl flex items-center justify-center ${i === nurseIdInput.length ? "border-primary" : "border-border"}`}>
-                    <span className="text-2xl font-mono font-bold text-primary">
-                      {nurseIdInput[i] ? "•" : ""}
+                    <span className="text-2xl font-mono font-bold text-foreground">
+                      {nurseIdInput[i] || ""}
                     </span>
                   </div>
                 ))}
@@ -353,7 +353,7 @@ export default function Workflow() {
                   setNurseIdInput(value);
                 }}
                 autoFocus
-                className="mt-4 w-full text-center text-2xl font-mono tracking-widest bg-transparent border-b-2 border-primary outline-none py-2"
+                className="sr-only"
                 data-testid="input-nurse-id"
               />
             </label>
