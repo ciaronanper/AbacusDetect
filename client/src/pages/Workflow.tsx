@@ -759,71 +759,71 @@ export default function Workflow() {
         const isMedRisk = severeProbability === "Medium";
         
         return (
-          <div className="flex flex-col h-full max-w-sm mx-auto pb-6">
-            <div className="flex-1 space-y-6 pt-4">
-              <div className="text-center space-y-1">
-                <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">SAA2 Result</h2>
+          <div className="flex flex-col h-full max-w-sm mx-auto pb-4">
+            <div className="flex-1 space-y-3 pt-2">
+              <div className="text-center">
+                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">SAA2 Result</h2>
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-6xl font-mono font-bold tracking-tighter">{result.saa2}</span>
-                  <span className="text-xl font-medium text-muted-foreground">mg/L</span>
+                  <span className="text-5xl font-mono font-bold tracking-tighter">{result.saa2}</span>
+                  <span className="text-lg font-medium text-muted-foreground">mg/L</span>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-2">
                   <div className={cn(
-                    "p-4 rounded-2xl border-2 text-center",
+                    "p-3 rounded-xl border-2 text-center",
                     isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
                   )}>
-                    <span className="text-xs font-bold uppercase opacity-60 mb-1 block">Probability of Severe Infection</span>
+                    <span className="text-[10px] font-bold uppercase opacity-60 block">Probability of Severe Infection</span>
                     <p className={cn(
-                      "text-2xl font-bold",
+                      "text-xl font-bold",
                       isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
                     )} data-testid="text-severe-probability">{severeProbability}</p>
                   </div>
 
                   <div className={cn(
-                    "p-4 rounded-2xl border-2 text-center",
+                    "p-3 rounded-xl border-2 text-center",
                     isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
                   )}>
-                    <span className="text-xs font-bold uppercase opacity-60 mb-1 block">Recommended ESI</span>
+                    <span className="text-[10px] font-bold uppercase opacity-60 block">Recommended ESI</span>
                     <p className={cn(
-                      "text-3xl font-bold",
+                      "text-2xl font-bold",
                       isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
                     )} data-testid="text-recommended-esi">{recommendedESI}</p>
                   </div>
                 </div>
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
-                  <div className="bg-card border border-border rounded-2xl p-4 shadow-sm" data-testid="card-vitals">
-                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-3">Patient Vitals</span>
-                    <div className="grid grid-cols-3 gap-3 text-center">
-                      <div className="space-y-1">
+                  <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid="card-vitals">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Patient Vitals</span>
+                    <div className="grid grid-cols-3 gap-2 text-center">
+                      <div>
                         <div className="flex items-center justify-center gap-1 text-muted-foreground">
                           <Thermometer className="w-3 h-3" />
-                          <span className="text-xs">Temp</span>
+                          <span className="text-[10px]">Temp</span>
                         </div>
-                        <p className="text-lg font-mono font-bold" data-testid="text-temperature">{vitals.temperature}°F</p>
+                        <p className="text-base font-mono font-bold" data-testid="text-temperature">{vitals.temperature}°F</p>
                       </div>
-                      <div className="space-y-1">
+                      <div>
                         <div className="flex items-center justify-center gap-1 text-muted-foreground">
                           <Heart className="w-3 h-3" />
-                          <span className="text-xs">SpO₂</span>
+                          <span className="text-[10px]">SpO₂</span>
                         </div>
-                        <p className="text-lg font-mono font-bold" data-testid="text-spo2">{vitals.spO2}%</p>
+                        <p className="text-base font-mono font-bold" data-testid="text-spo2">{vitals.spO2}%</p>
                       </div>
-                      <div className="space-y-1">
+                      <div>
                         <div className="flex items-center justify-center gap-1 text-muted-foreground">
                           <Wind className="w-3 h-3" />
-                          <span className="text-xs">Resp</span>
+                          <span className="text-[10px]">Resp</span>
                         </div>
-                        <p className="text-lg font-mono font-bold" data-testid="text-respiratory-rate">{vitals.respiratoryRate}</p>
+                        <p className="text-base font-mono font-bold" data-testid="text-respiratory-rate">{vitals.respiratoryRate}</p>
                       </div>
                     </div>
                   </div>
                 )}
 
-                <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground pt-4 border-t border-border">
+                <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
                   <div>
                     <span className="block font-bold">Patient</span>
                     <span className="font-mono">{MOCK_PATIENT}</span>
@@ -846,20 +846,20 @@ export default function Workflow() {
                   )}
                 </div>
 
-                <div className="pt-4 border-t border-border">
-                  <label className="block text-xs font-bold text-muted-foreground mb-2">Add Note</label>
+                <div className="pt-2 border-t border-border">
+                  <label className="block text-xs font-bold text-muted-foreground mb-1">Add Note</label>
                   <Textarea
                     placeholder="Enter any additional notes here..."
                     value={resultNote}
                     onChange={(e) => setResultNote(e.target.value)}
-                    className="min-h-[80px] text-sm"
+                    className="min-h-[60px] text-sm"
                     data-testid="textarea-result-note"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="pt-6 space-y-3">
+            <div className="pt-3 space-y-2">
               <ActionButton fullWidth onClick={() => setStep("uploading")} data-testid="button-upload-ehr">
                 Upload Data to EHR
               </ActionButton>
