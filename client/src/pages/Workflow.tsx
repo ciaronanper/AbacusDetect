@@ -264,12 +264,14 @@ export default function Workflow() {
               <p className="text-muted-foreground">Please enter your 6-digit staff number</p>
             </div>
 
-            <div className="w-full flex justify-center gap-2">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="w-10 h-14 bg-card border-2 border-border rounded-xl flex items-center justify-center">
-                  <span className="text-2xl font-mono font-bold text-primary">•</span>
-                </div>
-              ))}
+            <div className="p-6 rounded-3xl border-4 border-primary shadow-2xl bg-card/50">
+              <div className="flex justify-center gap-2">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="w-10 h-14 bg-card border-2 border-border rounded-xl flex items-center justify-center">
+                    <span className="text-2xl font-mono font-bold text-primary">•</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="w-full space-y-4 pt-8">
