@@ -777,29 +777,28 @@ export default function Workflow() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground pt-4 border-t border-border">
+                <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground pt-4 border-t border-border">
                   <div>
                     <span className="block font-bold">Patient</span>
                     <span className="font-mono">{MOCK_PATIENT}</span>
                   </div>
-                  <div className="text-right">
+                  <div>
                     <span className="block font-bold">Nurse</span>
                     <span>{MOCK_NURSE}</span>
                   </div>
+                  {resultDateTime && (
+                    <>
+                      <div>
+                        <span className="block font-bold">Date</span>
+                        <span>{resultDateTime.toLocaleDateString()}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="block font-bold">Time</span>
+                        <span>{resultDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
-
-                {resultDateTime && (
-                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground pt-4 border-t border-border">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      <span>{resultDateTime.toLocaleDateString()}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{resultDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                    </div>
-                  </div>
-                )}
 
                 <div className="pt-4 border-t border-border">
                   <label className="block text-xs font-bold text-muted-foreground mb-2">Add Note</label>
