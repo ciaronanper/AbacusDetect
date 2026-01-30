@@ -12,8 +12,11 @@ import {
   ChevronRight,
   RotateCcw,
   AlertCircle,
-  Activity
+  Activity,
+  Calendar,
+  Clock
 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 import { ActionButton } from "@/components/ActionButton";
 import { StatusCard } from "@/components/StatusCard";
 import { Header } from "@/components/Header";
@@ -59,6 +62,8 @@ export default function Workflow() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [result, setResult] = useState<TestResult | null>(null);
   const [nurseId, setNurseId] = useState("");
+  const [resultNote, setResultNote] = useState("");
+  const [resultDateTime, setResultDateTime] = useState<Date | null>(null);
   const { toast } = useToast();
   const createResult = useCreateResult();
 
@@ -114,6 +119,8 @@ export default function Workflow() {
       timer = setTimeout(() => {
         const newResult = generateResult();
         setResult(newResult);
+        setResultDateTime(new Date());
+        setResultNote("");
         
         // Optimistically save result
         createResult.mutate({
@@ -535,6 +542,30 @@ export default function Workflow() {
                     <span className="block font-bold">Nurse</span>
                     <span>{MOCK_NURSE}</span>
                   </div>
+                </div>
+
+                {resultDateTime && (
+                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground pt-4 border-t border-border">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{resultDateTime.toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      <span>{resultDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="pt-4 border-t border-border">
+                  <label className="block text-xs font-bold text-muted-foreground mb-2">Add Note</label>
+                  <Textarea
+                    placeholder="Enter any additional notes here..."
+                    value={resultNote}
+                    onChange={(e) => setResultNote(e.target.value)}
+                    className="min-h-[80px] text-sm"
+                    data-testid="textarea-result-note"
+                  />
                 </div>
               </div>
             </div>
