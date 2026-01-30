@@ -9,9 +9,19 @@ interface FaceDetectionProps {
 
 export function FaceDetection({ onComplete, onCancel }: FaceDetectionProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<"initializing" | "ready" | "scanning" | "success">("initializing");
+
+  const stopCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+  };
 
   useEffect(() => {
     async function startCamera() {
@@ -19,7 +29,7 @@ export function FaceDetection({ onComplete, onCancel }: FaceDetectionProps) {
         const mediaStream = await navigator.mediaDevices.getUserMedia({ 
           video: { facingMode: "user" } 
         });
-        setStream(mediaStream);
+        streamRef.current = mediaStream;
         if (videoRef.current) {
           videoRef.current.srcObject = mediaStream;
         }
@@ -34,17 +44,16 @@ export function FaceDetection({ onComplete, onCancel }: FaceDetectionProps) {
 
     return () => {
       console.log("Cleaning up FaceDetection camera stream");
-      if (stream) {
-        stream.getTracks().forEach(track => track.stop());
-      }
+      stopCamera();
     };
-  }, [stream]);
+  }, []);
 
   const handleScan = () => {
     setStatus("scanning");
     // Simulate biometric processing
     setTimeout(() => {
       setStatus("success");
+      stopCamera();
       setTimeout(() => {
         onComplete();
       }, 1500);
