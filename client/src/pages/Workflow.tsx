@@ -70,8 +70,16 @@ interface Vitals {
 }
 
 // === CONSTANTS ===
-const MOCK_NURSE = "Nurse VX792";
-const MOCK_PATIENT = "XU274";
+const generateRandomId = () => {
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const l1 = letters[Math.floor(Math.random() * 26)];
+  const l2 = letters[Math.floor(Math.random() * 26)];
+  const num = Math.floor(100 + Math.random() * 900); // 100-999
+  return `${l1}${l2}${num}`;
+};
+
+const MOCK_NURSE = generateRandomId();
+const MOCK_PATIENT = generateRandomId();
 const TEST_DURATION_SECONDS = 300; // 5 minutes
 const SCAN_DURATION_MS = 5000;
 
