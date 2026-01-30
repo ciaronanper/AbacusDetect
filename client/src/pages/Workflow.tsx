@@ -221,9 +221,11 @@ export default function Workflow() {
                 <User className="w-5 h-5 mr-2" />
                 Face ID
               </ActionButton>
-              <ActionButton variant="ghost" fullWidth onClick={() => setStep("nurse-id-input")} className="text-muted-foreground">
-                Input Nurse ID number
-              </ActionButton>
+              <div className="p-4 rounded-3xl border-4 border-primary shadow-2xl">
+                <ActionButton variant="ghost" fullWidth onClick={() => setStep("nurse-id-input")} className="text-muted-foreground">
+                  Input Nurse ID number
+                </ActionButton>
+              </div>
             </div>
           </div>
         );
