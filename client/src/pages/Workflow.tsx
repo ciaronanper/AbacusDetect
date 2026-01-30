@@ -353,7 +353,7 @@ export default function Workflow() {
                   setNurseIdInput(value);
                 }}
                 autoFocus
-                className="sr-only"
+                className="mt-4 w-full text-center text-2xl font-mono tracking-widest bg-transparent border-b-2 border-primary outline-none py-2"
                 data-testid="input-nurse-id"
               />
             </label>
