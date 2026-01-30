@@ -696,7 +696,23 @@ export default function Workflow() {
       case "results":
         if (!result) return null;
         
-        const isHighRisk = result.saa2 > 100;
+        // Calculate probability and ESI based on SAA2
+        let severeProbability: "High" | "Med" | "Low";
+        let recommendedESI: 2 | 3 | 4;
+        
+        if (result.saa2 > 200) {
+          severeProbability = "High";
+          recommendedESI = 2;
+        } else if (result.saa2 > 100) {
+          severeProbability = "Med";
+          recommendedESI = 3;
+        } else {
+          severeProbability = "Low";
+          recommendedESI = 4;
+        }
+        
+        const isHighRisk = severeProbability === "High";
+        const isMedRisk = severeProbability === "Med";
         
         return (
           <div className="flex flex-col h-full max-w-sm mx-auto pb-6">
@@ -711,26 +727,25 @@ export default function Workflow() {
 
               <div className="space-y-4">
                 <div className={cn(
-                  "p-6 rounded-2xl border-2 text-center",
-                  isHighRisk ? "bg-red-50 border-red-100" : "bg-blue-50 border-blue-100"
+                  "p-4 rounded-2xl border-2 text-center",
+                  isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
                 )}>
-                  <span className="text-xs font-bold uppercase opacity-60 mb-1 block">Inflammation Level</span>
+                  <span className="text-xs font-bold uppercase opacity-60 mb-1 block">Probability of Severe Infection</span>
                   <p className={cn(
                     "text-2xl font-bold",
-                    isHighRisk ? "text-red-700" : "text-blue-700"
-                  )}>{result.level}</p>
+                    isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
+                  )} data-testid="text-severe-probability">{severeProbability}</p>
                 </div>
 
-                <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-2">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className={cn("w-5 h-5 mt-0.5 shrink-0", isHighRisk ? "text-red-500" : "text-blue-500")} />
-                    <div>
-                      <span className="text-sm font-bold text-foreground block mb-1">Clinical Interpretation</span>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {result.interpretation}
-                      </p>
-                    </div>
-                  </div>
+                <div className={cn(
+                  "p-4 rounded-2xl border-2 text-center",
+                  isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
+                )}>
+                  <span className="text-xs font-bold uppercase opacity-60 mb-1 block">Recommended ESI</span>
+                  <p className={cn(
+                    "text-3xl font-bold",
+                    isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
+                  )} data-testid="text-recommended-esi">{recommendedESI}</p>
                 </div>
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
