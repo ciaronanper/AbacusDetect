@@ -12,7 +12,12 @@ import {
   ChevronRight,
   RotateCcw,
   AlertCircle,
-  Activity
+  Activity,
+  Plus,
+  Mic,
+  MessageSquare,
+  X,
+  Save
 } from "lucide-react";
 import { ActionButton } from "@/components/ActionButton";
 import { StatusCard } from "@/components/StatusCard";
@@ -21,6 +26,15 @@ import { FaceDetection } from "@/components/FaceDetection";
 import { QRScanner } from "@/components/QRScanner";
 import { useCreateResult } from "@/hooks/use-results";
 import { useToast } from "@/hooks/use-toast";
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
 import logoPng from "@assets/Vertical_logo_bgtransparent_1769613129480.png";
 import patientQr from "@assets/patientQR_1769614112153.webp";
 import nurseQr from "@assets/Screenshot_2026-01-28_153006_1769614259203.png";
@@ -221,7 +235,8 @@ export default function Workflow() {
                 <User className="w-5 h-5 mr-2" />
                 Face ID
               </ActionButton>
-              <ActionButton variant="ghost" fullWidth onClick={() => setStep("nurse-id-input")} className="text-muted-foreground">
+              <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-id-input")}>
+                <Timer className="w-5 h-5 mr-2" />
                 Input Nurse ID number
               </ActionButton>
             </div>
@@ -491,15 +506,57 @@ export default function Workflow() {
                   )}>{result.level}</p>
                 </div>
 
-                <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-2">
-                  <div className="flex items-start gap-3">
-                    <AlertCircle className={cn("w-5 h-5 mt-0.5 shrink-0", isHighRisk ? "text-red-500" : "text-blue-500")} />
-                    <div>
-                      <span className="text-sm font-bold text-foreground block mb-1">Clinical Interpretation</span>
-                      <p className="text-muted-foreground leading-relaxed">
-                        {result.interpretation}
-                      </p>
+                <div className="bg-card border border-border rounded-2xl p-6 shadow-sm space-y-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className={cn("w-5 h-5 mt-0.5 shrink-0", isHighRisk ? "text-red-500" : "text-blue-500")} />
+                      <div>
+                        <span className="text-sm font-bold text-foreground block mb-1">Clinical Interpretation</span>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {result.interpretation}
+                        </p>
+                      </div>
                     </div>
+                    
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button size="icon" variant="outline" className="shrink-0 h-8 w-8">
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Add Clinical Note</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-4">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Text Note</label>
+                            <Textarea 
+                              placeholder="Enter observation details..." 
+                              className="min-h-[100px] resize-none"
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium">Voice Memo</label>
+                            <div className="flex items-center gap-2 p-4 border-2 border-dashed border-border rounded-xl bg-muted/30">
+                              <Button size="icon" variant="secondary" className="rounded-full">
+                                <Mic className="h-4 w-4" />
+                              </Button>
+                              <span className="text-sm text-muted-foreground">Tap to record audio note</span>
+                            </div>
+                          </div>
+                          <Button className="w-full mt-4" onClick={() => {
+                            toast({
+                              title: "Note Saved",
+                              description: "Clinical note has been attached to this record."
+                            });
+                          }}>
+                            <Save className="w-4 h-4 mr-2" />
+                            Save Note
+                          </Button>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </div>
 
