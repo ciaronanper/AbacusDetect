@@ -141,8 +141,10 @@ export default function Workflow() {
       }, 5000);
     }
 
-    return () => clearTimeout(timer);
-  }, [step, toast, createResult]);
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [step]);
 
   // === TIMER EFFECT ===
   useEffect(() => {

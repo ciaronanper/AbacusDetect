@@ -38,7 +38,7 @@ export function FaceDetection({ onComplete, onCancel }: FaceDetectionProps) {
         stream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [stream]);
+  }, []);
 
   const handleScan = () => {
     setStatus("scanning");

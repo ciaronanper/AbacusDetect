@@ -39,7 +39,7 @@ export function QRScanner({ label, onScan, overlayImage }: QRScannerProps) {
         });
       }
     };
-  }, [overlayImage]);
+  }, []);
 
   return (
     <div className="relative w-64 h-64 bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800">
