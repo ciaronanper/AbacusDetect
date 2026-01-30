@@ -52,7 +52,9 @@ type Step =
   | "apply-sample"
   | "test-progress"
   | "test-complete"
-  | "results";
+  | "results"
+  | "uploading"
+  | "upload-confirm";
 
 interface TestResult {
   saa2: number;
@@ -67,7 +69,7 @@ interface Vitals {
 }
 
 // === CONSTANTS ===
-const MOCK_NURSE = "Jane Doe";
+const MOCK_NURSE = "Nurse VX792";
 const MOCK_PATIENT = "XU274";
 const TEST_DURATION_SECONDS = 300; // 5 minutes
 const SCAN_DURATION_MS = 5000;
@@ -155,6 +157,11 @@ export default function Workflow() {
 
         setStep("results");
       }, 5000);
+    } else if (step === "uploading") {
+      // Uploading to EHR (2.5s)
+      timer = setTimeout(() => {
+        setStep("upload-confirm");
+      }, 2500);
     }
 
     return () => clearTimeout(timer);
@@ -183,7 +190,7 @@ export default function Workflow() {
   };
 
   // === HANDLERS ===
-  const startWorkflow = () => setStep("connecting");
+  const startWorkflow = () => setStep("nurse-auth-choice");
   const restartWorkflow = () => {
     setStep("home");
     setResult(null);
@@ -362,7 +369,7 @@ export default function Workflow() {
             <div className="w-full space-y-4 pt-4">
               <p className="text-center font-medium">Correct ID?</p>
               <div className="grid grid-cols-2 gap-4">
-                <ActionButton variant="outline" onClick={() => setStep("nurse-auth-choice")}>No</ActionButton>
+                <ActionButton variant="outline" onClick={() => setStep("nurse-scan")}>No</ActionButton>
                 <ActionButton variant="primary" onClick={() => setStep("patient-scan")}>Yes</ActionButton>
               </div>
             </div>
@@ -407,8 +414,8 @@ export default function Workflow() {
             <div className="w-full space-y-4 pt-4">
               <p className="text-center font-medium">Correct ID?</p>
               <div className="grid grid-cols-2 gap-4">
-                <ActionButton variant="outline" onClick={() => setStep("patient-scan")}>No</ActionButton>
-                <ActionButton variant="primary" onClick={() => setStep("vitals-choice")}>Yes</ActionButton>
+                <ActionButton variant="outline" onClick={() => setStep("patient-scan")} data-testid="button-patient-confirm-no">No</ActionButton>
+                <ActionButton variant="primary" onClick={() => setStep("vitals-choice")} data-testid="button-patient-confirm-yes">Yes</ActionButton>
               </div>
             </div>
           </div>
@@ -814,9 +821,52 @@ export default function Workflow() {
             </div>
 
             <div className="pt-6">
-              <ActionButton fullWidth variant="outline" onClick={restartWorkflow} className="border-primary/20 text-primary hover:bg-primary/5">
-                <RotateCcw className="w-5 h-5 mr-2" />
-                New Test
+              <ActionButton fullWidth onClick={() => setStep("uploading")} data-testid="button-upload-ehr">
+                Upload Data to Electronic Health Record
+              </ActionButton>
+            </div>
+          </div>
+        );
+
+      case "uploading":
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
+            <StatusCard 
+              icon={Activity}
+              title="Connecting..."
+              description="Establishing secure link to Electronic Health Record System"
+              status="processing"
+            />
+            <div className="w-full max-w-xs bg-secondary/50 rounded-full h-2 overflow-hidden">
+              <motion.div 
+                className="h-full bg-primary"
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 2.5, ease: "linear" }}
+              />
+            </div>
+          </div>
+        );
+
+      case "upload-confirm":
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center text-green-600"
+            >
+              <CheckCircle2 className="w-16 h-16" />
+            </motion.div>
+            
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-display font-bold">Data Uploaded</h2>
+              <p className="text-muted-foreground">Successfully uploaded to Electronic Health Record</p>
+            </div>
+
+            <div className="w-full pt-8">
+              <ActionButton fullWidth onClick={restartWorkflow} data-testid="button-confirm-upload">
+                Confirm Data Upload
               </ActionButton>
             </div>
           </div>
