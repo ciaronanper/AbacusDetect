@@ -58,6 +58,7 @@ export default function Workflow() {
   const [step, setStep] = useState<Step>("home");
   const [timeLeft, setTimeLeft] = useState(0);
   const [result, setResult] = useState<TestResult | null>(null);
+  const [nurseId, setNurseId] = useState("");
   const { toast } = useToast();
   const createResult = useCreateResult();
 
@@ -264,21 +265,41 @@ export default function Workflow() {
               <p className="text-muted-foreground">Please enter your 6-digit staff number</p>
             </div>
 
-            <div className="p-6 rounded-3xl border-4 border-primary shadow-2xl bg-card/50">
+            <label className="p-6 rounded-3xl border-4 border-primary shadow-2xl bg-card/50 cursor-text">
               <div className="flex justify-center gap-2">
                 {[...Array(6)].map((_, i) => (
-                  <div key={i} className="w-10 h-14 bg-card border-2 border-border rounded-xl flex items-center justify-center">
-                    <span className="text-2xl font-mono font-bold text-primary">•</span>
+                  <div key={i} className={`w-10 h-14 bg-card border-2 rounded-xl flex items-center justify-center ${i === nurseId.length ? "border-primary" : "border-border"}`}>
+                    <span className="text-2xl font-mono font-bold text-primary">
+                      {nurseId[i] ? "•" : ""}
+                    </span>
                   </div>
                 ))}
               </div>
-            </div>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                value={nurseId}
+                onChange={(e) => {
+                  const value = e.target.value.replace(/\D/g, "").slice(0, 6);
+                  setNurseId(value);
+                }}
+                autoFocus
+                className="sr-only"
+                data-testid="input-nurse-id"
+              />
+            </label>
 
             <div className="w-full space-y-4 pt-8">
-              <ActionButton fullWidth onClick={() => setStep("nurse-confirm")}>
+              <ActionButton 
+                fullWidth 
+                onClick={() => setStep("nurse-confirm")}
+                disabled={nurseId.length !== 6}
+              >
                 Confirm Identity
               </ActionButton>
-              <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-auth-choice")}>
+              <ActionButton variant="outline" fullWidth onClick={() => { setNurseId(""); setStep("nurse-auth-choice"); }}>
                 Back
               </ActionButton>
             </div>
