@@ -758,26 +758,28 @@ export default function Workflow() {
               </div>
 
               <div className="space-y-4">
-                <div className={cn(
-                  "p-4 rounded-2xl border-2 text-center",
-                  isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
-                )}>
-                  <span className="text-xs font-bold uppercase opacity-60 mb-1 block">Probability of Severe Infection</span>
-                  <p className={cn(
-                    "text-2xl font-bold",
-                    isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
-                  )} data-testid="text-severe-probability">{severeProbability}</p>
-                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className={cn(
+                    "p-4 rounded-2xl border-2 text-center",
+                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
+                  )}>
+                    <span className="text-xs font-bold uppercase opacity-60 mb-1 block">Probability of Severe Infection</span>
+                    <p className={cn(
+                      "text-2xl font-bold",
+                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
+                    )} data-testid="text-severe-probability">{severeProbability}</p>
+                  </div>
 
-                <div className={cn(
-                  "p-4 rounded-2xl border-2 text-center",
-                  isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
-                )}>
-                  <span className="text-xs font-bold uppercase opacity-60 mb-1 block">Recommended ESI</span>
-                  <p className={cn(
-                    "text-3xl font-bold",
-                    isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
-                  )} data-testid="text-recommended-esi">{recommendedESI}</p>
+                  <div className={cn(
+                    "p-4 rounded-2xl border-2 text-center",
+                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
+                  )}>
+                    <span className="text-xs font-bold uppercase opacity-60 mb-1 block">Recommended ESI</span>
+                    <p className={cn(
+                      "text-3xl font-bold",
+                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
+                    )} data-testid="text-recommended-esi">{recommendedESI}</p>
+                  </div>
                 </div>
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
