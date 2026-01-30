@@ -47,6 +47,7 @@ type Step =
   | "vitals-choice"
   | "vitals-manual"
   | "vitals-auto"
+  | "vitals-confirm"
   | "insert-cartridge"
   | "apply-sample"
   | "test-progress"
@@ -133,7 +134,7 @@ export default function Workflow() {
       // Automated vitals gathering (3s)
       timer = setTimeout(() => {
         setVitals(generateRandomVitals());
-        setStep("insert-cartridge");
+        setStep("vitals-confirm");
       }, 3000);
     } else if (step === "test-complete") {
       // Step 10: Complete (5s) -> Results
@@ -532,6 +533,52 @@ export default function Workflow() {
                 animate={{ width: "100%" }}
                 transition={{ duration: 3, ease: "linear" }}
               />
+            </div>
+          </div>
+        );
+
+      case "vitals-confirm":
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
+            <StatusCard 
+              icon={Activity}
+              title="Vitals Retrieved"
+              description="Please verify the captured vital signs"
+              status="success"
+            />
+            
+            <div className="w-full bg-card border border-border rounded-2xl p-6 shadow-sm">
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                    <Thermometer className="w-4 h-4" />
+                    <span className="text-xs font-medium">Temp</span>
+                  </div>
+                  <p className="text-2xl font-mono font-bold" data-testid="text-confirm-temperature">{vitals.temperature}°F</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                    <Heart className="w-4 h-4" />
+                    <span className="text-xs font-medium">SpO₂</span>
+                  </div>
+                  <p className="text-2xl font-mono font-bold" data-testid="text-confirm-spo2">{vitals.spO2}%</p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                    <Wind className="w-4 h-4" />
+                    <span className="text-xs font-medium">Resp</span>
+                  </div>
+                  <p className="text-2xl font-mono font-bold" data-testid="text-confirm-respiratory">{vitals.respiratoryRate}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full space-y-4 pt-4">
+              <p className="text-center font-medium">Correct vitals?</p>
+              <div className="grid grid-cols-2 gap-4">
+                <ActionButton variant="outline" onClick={() => { setVitals({ temperature: "", spO2: "", respiratoryRate: "" }); setStep("vitals-choice"); }} data-testid="button-vitals-confirm-no">No</ActionButton>
+                <ActionButton variant="primary" onClick={() => setStep("insert-cartridge")} data-testid="button-vitals-confirm-yes">Yes</ActionButton>
+              </div>
             </div>
           </div>
         );
