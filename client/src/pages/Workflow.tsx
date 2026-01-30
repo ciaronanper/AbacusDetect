@@ -92,6 +92,7 @@ export default function Workflow() {
   const [result, setResult] = useState<TestResult | null>(null);
   const [nurseIdInput, setNurseIdInput] = useState("");
   const [confirmedNurseId, setConfirmedNurseId] = useState("");
+  const [nurseAuthMethod, setNurseAuthMethod] = useState<"scan" | "face" | "input">("scan");
   const [resultNote, setResultNote] = useState("");
   const [resultDateTime, setResultDateTime] = useState<Date | null>(null);
   const [vitals, setVitals] = useState<Vitals>({ temperature: "", spO2: "", respiratoryRate: "" });
@@ -291,6 +292,7 @@ export default function Workflow() {
         return (
           <FaceDetection 
             onComplete={() => {
+              setNurseAuthMethod("face");
               setConfirmedNurseId(generateNurseId());
               setStep("nurse-confirm");
             }}
@@ -304,6 +306,7 @@ export default function Workflow() {
             <QRScanner 
               label="Scanning Nurse QR / Barcode" 
               onScan={() => {
+                setNurseAuthMethod("scan");
                 setConfirmedNurseId(generateNurseId());
                 setStep("nurse-confirm");
               }} 
@@ -318,6 +321,7 @@ export default function Workflow() {
             
             {/* Hidden debug button to skip wait */}
             <button onClick={() => {
+              setNurseAuthMethod("scan");
               setConfirmedNurseId(generateNurseId());
               setStep("nurse-confirm");
             }} className="opacity-0 h-10">Skip</button>
@@ -362,6 +366,7 @@ export default function Workflow() {
               <ActionButton 
                 fullWidth 
                 onClick={() => {
+                  setNurseAuthMethod("input");
                   setConfirmedNurseId(nurseIdInput);
                   setStep("nurse-confirm");
                 }}
@@ -392,7 +397,16 @@ export default function Workflow() {
             </div>
 
             <div className="w-full grid grid-cols-2 gap-4 pt-4">
-              <ActionButton variant="outline" onClick={() => setStep("nurse-scan")} data-testid="button-nurse-retry">Retry</ActionButton>
+              <ActionButton variant="outline" onClick={() => {
+                if (nurseAuthMethod === "input") {
+                  setNurseIdInput("");
+                  setStep("nurse-id-input");
+                } else if (nurseAuthMethod === "face") {
+                  setStep("nurse-face-id");
+                } else {
+                  setStep("nurse-scan");
+                }
+              }} data-testid="button-nurse-retry">Retry</ActionButton>
               <ActionButton variant="primary" onClick={() => setStep("patient-scan")} data-testid="button-nurse-confirm">Confirm</ActionButton>
             </div>
           </div>
