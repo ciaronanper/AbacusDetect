@@ -213,7 +213,7 @@ export default function Workflow() {
             />
             
             <div className="w-full space-y-4">
-              <ActionButton fullWidth onClick={() => setStep("nurse-scan")}>
+              <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-scan")}>
                 <ScanLine className="w-5 h-5 mr-2" />
                 Scan Nurse QR / Barcode
               </ActionButton>
@@ -221,11 +221,9 @@ export default function Workflow() {
                 <User className="w-5 h-5 mr-2" />
                 Face ID
               </ActionButton>
-              <div className="p-4 rounded-3xl border-4 border-primary shadow-2xl">
-                <ActionButton variant="ghost" fullWidth onClick={() => setStep("nurse-id-input")} className="text-muted-foreground">
-                  Input Nurse ID number
-                </ActionButton>
-              </div>
+              <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-id-input")}>
+                Input Nurse ID number
+              </ActionButton>
             </div>
           </div>
         );
