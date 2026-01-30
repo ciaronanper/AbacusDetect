@@ -142,7 +142,11 @@ export default function Workflow() {
       }, 2500);
     } else if (step === "nurse-scan") {
       // Step 3: Nurse Scan (5s) -> Nurse Confirm
-      timer = setTimeout(() => setStep("nurse-confirm"), SCAN_DURATION_MS);
+      timer = setTimeout(() => {
+        setNurseAuthMethod("scan");
+        setConfirmedNurseId(generateNurseId());
+        setStep("nurse-confirm");
+      }, SCAN_DURATION_MS);
     } else if (step === "patient-scan") {
       // Step 5: Patient Scan (5s) -> Patient Confirm
       timer = setTimeout(() => setStep("patient-confirm"), SCAN_DURATION_MS);
