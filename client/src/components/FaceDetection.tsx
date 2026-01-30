@@ -1,3 +1,4 @@
+import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Camera, RefreshCcw, CheckCircle2 } from "lucide-react";
 import { ActionButton } from "./ActionButton";
