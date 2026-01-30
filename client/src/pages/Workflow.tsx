@@ -535,17 +535,8 @@ export default function Workflow() {
                             <label className="text-sm font-medium">Text Note</label>
                             <Textarea 
                               placeholder="Enter observation details..." 
-                              className="min-h-[100px] resize-none"
+                              className="min-h-[150px] resize-none"
                             />
-                          </div>
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">Voice Memo</label>
-                            <div className="flex items-center gap-2 p-4 border-2 border-dashed border-border rounded-xl bg-muted/30">
-                              <Button size="icon" variant="secondary" className="rounded-full">
-                                <Mic className="h-4 w-4" />
-                              </Button>
-                              <span className="text-sm text-muted-foreground">Tap to record audio note</span>
-                            </div>
                           </div>
                           <Button className="w-full mt-4" onClick={() => {
                             toast({
