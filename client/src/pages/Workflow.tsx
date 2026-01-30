@@ -697,14 +697,14 @@ export default function Workflow() {
         if (!result) return null;
         
         // Calculate probability and ESI based on SAA2
-        let severeProbability: "High" | "Med" | "Low";
+        let severeProbability: "High" | "Medium" | "Low";
         let recommendedESI: 2 | 3 | 4;
         
         if (result.saa2 > 200) {
           severeProbability = "High";
           recommendedESI = 2;
         } else if (result.saa2 > 100) {
-          severeProbability = "Med";
+          severeProbability = "Medium";
           recommendedESI = 3;
         } else {
           severeProbability = "Low";
@@ -712,7 +712,7 @@ export default function Workflow() {
         }
         
         const isHighRisk = severeProbability === "High";
-        const isMedRisk = severeProbability === "Med";
+        const isMedRisk = severeProbability === "Medium";
         
         return (
           <div className="flex flex-col h-full max-w-sm mx-auto pb-6">
