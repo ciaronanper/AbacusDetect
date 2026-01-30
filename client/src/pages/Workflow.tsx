@@ -54,7 +54,8 @@ type Step =
   | "test-complete"
   | "results"
   | "uploading"
-  | "upload-confirm";
+  | "upload-confirm"
+  | "local-save-confirm";
 
 interface TestResult {
   saa2: number;
@@ -820,9 +821,12 @@ export default function Workflow() {
               </div>
             </div>
 
-            <div className="pt-6">
+            <div className="pt-6 space-y-3">
               <ActionButton fullWidth onClick={() => setStep("uploading")} data-testid="button-upload-ehr">
-                Upload Data to Electronic Health Record
+                Upload Data to EHR
+              </ActionButton>
+              <ActionButton fullWidth variant="outline" onClick={() => setStep("local-save-confirm")} data-testid="button-store-locally">
+                Store Data Locally
               </ActionButton>
             </div>
           </div>
@@ -867,6 +871,31 @@ export default function Workflow() {
             <div className="w-full pt-8">
               <ActionButton fullWidth onClick={restartWorkflow} data-testid="button-confirm-upload">
                 Confirm Data Upload
+              </ActionButton>
+            </div>
+          </div>
+        );
+
+      case "local-save-confirm":
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center text-green-600"
+            >
+              <CheckCircle2 className="w-16 h-16" />
+            </motion.div>
+            
+            <div className="text-center space-y-2">
+              <h2 className="text-2xl font-display font-bold">Data Successfully Saved</h2>
+              <p className="text-muted-foreground">Test data has been stored locally</p>
+            </div>
+
+            <div className="w-full pt-8">
+              <ActionButton fullWidth onClick={restartWorkflow} data-testid="button-new-test">
+                <RotateCcw className="w-5 h-5 mr-2" />
+                New Test
               </ActionButton>
             </div>
           </div>
