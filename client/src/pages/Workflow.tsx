@@ -14,8 +14,13 @@ import {
   AlertCircle,
   Activity,
   Calendar,
-  Clock
+  Clock,
+  Thermometer,
+  Heart,
+  Wind,
+  Loader2
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ActionButton } from "@/components/ActionButton";
 import { StatusCard } from "@/components/StatusCard";
@@ -39,6 +44,9 @@ type Step =
   | "nurse-confirm"
   | "patient-scan"
   | "patient-confirm"
+  | "vitals-choice"
+  | "vitals-manual"
+  | "vitals-auto"
   | "insert-cartridge"
   | "apply-sample"
   | "test-progress"
@@ -49,6 +57,12 @@ interface TestResult {
   saa2: number;
   level: string;
   interpretation: string;
+}
+
+interface Vitals {
+  temperature: string;
+  spO2: string;
+  respiratoryRate: string;
 }
 
 // === CONSTANTS ===
@@ -64,6 +78,7 @@ export default function Workflow() {
   const [nurseId, setNurseId] = useState("");
   const [resultNote, setResultNote] = useState("");
   const [resultDateTime, setResultDateTime] = useState<Date | null>(null);
+  const [vitals, setVitals] = useState<Vitals>({ temperature: "", spO2: "", respiratoryRate: "" });
   const { toast } = useToast();
   const createResult = useCreateResult();
 
@@ -114,6 +129,12 @@ export default function Workflow() {
     } else if (step === "patient-scan") {
       // Step 5: Patient Scan (5s) -> Patient Confirm
       timer = setTimeout(() => setStep("patient-confirm"), SCAN_DURATION_MS);
+    } else if (step === "vitals-auto") {
+      // Automated vitals gathering (3s)
+      timer = setTimeout(() => {
+        setVitals(generateRandomVitals());
+        setStep("insert-cartridge");
+      }, 3000);
     } else if (step === "test-complete") {
       // Step 10: Complete (5s) -> Results
       timer = setTimeout(() => {
@@ -152,12 +173,21 @@ export default function Workflow() {
   }, [step, timeLeft]);
 
 
+  // === HELPERS ===
+  const generateRandomVitals = (): Vitals => {
+    const temp = (96 + Math.random() * 6).toFixed(1); // 96.0 - 102.0 F
+    const spO2 = Math.floor(88 + Math.random() * 12).toString(); // 88-99%
+    const respRate = Math.floor(12 + Math.random() * 12).toString(); // 12-23 breaths/min
+    return { temperature: temp, spO2, respiratoryRate: respRate };
+  };
+
   // === HANDLERS ===
   const startWorkflow = () => setStep("connecting");
   const restartWorkflow = () => {
     setStep("home");
     setResult(null);
     setTimeLeft(0);
+    setVitals({ temperature: "", spO2: "", respiratoryRate: "" });
   };
 
   const startTest = () => {
@@ -377,8 +407,131 @@ export default function Workflow() {
               <p className="text-center font-medium">Correct ID?</p>
               <div className="grid grid-cols-2 gap-4">
                 <ActionButton variant="outline" onClick={() => setStep("patient-scan")}>No</ActionButton>
-                <ActionButton variant="primary" onClick={() => setStep("insert-cartridge")}>Yes</ActionButton>
+                <ActionButton variant="primary" onClick={() => setStep("vitals-choice")}>Yes</ActionButton>
               </div>
+            </div>
+          </div>
+        );
+
+      case "vitals-choice":
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
+            <StatusCard 
+              icon={Activity}
+              title="Retrieving Vitals"
+              description="Choose how to capture patient vital signs"
+            />
+            
+            <div className="w-full space-y-4">
+              <ActionButton variant="outline" fullWidth onClick={() => setStep("vitals-manual")} data-testid="button-vitals-manual">
+                <Thermometer className="w-5 h-5 mr-2" />
+                Manual Entry
+              </ActionButton>
+              <ActionButton variant="outline" fullWidth onClick={() => setStep("vitals-auto")} data-testid="button-vitals-auto">
+                <Activity className="w-5 h-5 mr-2" />
+                Automated Entry
+              </ActionButton>
+            </div>
+          </div>
+        );
+
+      case "vitals-manual":
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
+            <StatusCard 
+              icon={Thermometer}
+              title="Enter Vitals"
+              description="Please enter the patient's vital signs"
+            />
+            
+            <div className="w-full space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Thermometer className="w-4 h-4 text-primary" />
+                  Temperature (°F)
+                </label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  min="90"
+                  max="110"
+                  placeholder="98.6"
+                  value={vitals.temperature}
+                  onChange={(e) => setVitals({ ...vitals, temperature: e.target.value })}
+                  data-testid="input-temperature"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Heart className="w-4 h-4 text-primary" />
+                  Blood Oxygen (SpO₂ %)
+                </label>
+                <Input
+                  type="number"
+                  min="70"
+                  max="100"
+                  placeholder="98"
+                  value={vitals.spO2}
+                  onChange={(e) => setVitals({ ...vitals, spO2: e.target.value })}
+                  data-testid="input-spo2"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <label className="text-sm font-medium flex items-center gap-2">
+                  <Wind className="w-4 h-4 text-primary" />
+                  Respiratory Rate (breaths/min)
+                </label>
+                <Input
+                  type="number"
+                  min="8"
+                  max="40"
+                  placeholder="16"
+                  value={vitals.respiratoryRate}
+                  onChange={(e) => setVitals({ ...vitals, respiratoryRate: e.target.value })}
+                  data-testid="input-respiratory-rate"
+                />
+              </div>
+            </div>
+
+            <div className="w-full space-y-4 pt-4">
+              <ActionButton 
+                fullWidth 
+                onClick={() => setStep("insert-cartridge")}
+                disabled={!vitals.temperature || !vitals.spO2 || !vitals.respiratoryRate}
+                data-testid="button-vitals-continue"
+              >
+                Continue <ChevronRight className="w-5 h-5 ml-1" />
+              </ActionButton>
+              <ActionButton variant="outline" fullWidth onClick={() => setStep("vitals-choice")} data-testid="button-vitals-back">
+                Back
+              </ActionButton>
+            </div>
+          </div>
+        );
+
+      case "vitals-auto":
+        return (
+          <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
+            <div className="w-32 h-32 bg-primary/10 rounded-full flex items-center justify-center">
+              <Loader2 className="w-16 h-16 text-primary animate-spin" />
+            </div>
+
+            <StatusCard 
+              icon={Activity}
+              title="Gathering Vitals"
+              description="Automatically retrieving patient vital signs..."
+              status="processing"
+            />
+
+            <div className="w-full max-w-xs bg-secondary/50 rounded-full h-2 overflow-hidden">
+              <motion.div 
+                className="h-full bg-primary"
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 3, ease: "linear" }}
+              />
             </div>
           </div>
         );
@@ -532,6 +685,35 @@ export default function Workflow() {
                     </div>
                   </div>
                 </div>
+
+                {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
+                  <div className="bg-card border border-border rounded-2xl p-4 shadow-sm" data-testid="card-vitals">
+                    <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider block mb-3">Patient Vitals</span>
+                    <div className="grid grid-cols-3 gap-3 text-center">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                          <Thermometer className="w-3 h-3" />
+                          <span className="text-xs">Temp</span>
+                        </div>
+                        <p className="text-lg font-mono font-bold" data-testid="text-temperature">{vitals.temperature}°F</p>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                          <Heart className="w-3 h-3" />
+                          <span className="text-xs">SpO₂</span>
+                        </div>
+                        <p className="text-lg font-mono font-bold" data-testid="text-spo2">{vitals.spO2}%</p>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                          <Wind className="w-3 h-3" />
+                          <span className="text-xs">Resp</span>
+                        </div>
+                        <p className="text-lg font-mono font-bold" data-testid="text-respiratory-rate">{vitals.respiratoryRate}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground pt-4 border-t border-border">
                   <div>
