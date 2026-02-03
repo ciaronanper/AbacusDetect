@@ -629,16 +629,14 @@ export default function Workflow() {
       case "insert-cartridge":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
-            <div className="w-48 h-48 bg-blue-50 rounded-full flex items-center justify-center animate-pulse">
-              <div className="w-32 h-40 bg-white border-2 border-primary/20 rounded-lg shadow-lg flex items-center justify-center">
-                 <div className="w-20 h-2 bg-primary/20 rounded-full" />
-              </div>
+            <div className="text-center">
+              <img src={logoPng} alt="Abacus Labs" className="h-40 w-auto mx-auto object-contain" />
             </div>
 
             <StatusCard 
               icon={TestTube2}
               title="Insert Cartridge"
-              description="Please insert SAA2 cartridge into reader slot"
+              description="Please insert SAA2 cartridge into reader port"
             />
 
             <div className="w-full pt-8">
@@ -659,7 +657,7 @@ export default function Workflow() {
             <StatusCard 
               icon={Syringe}
               title="Apply Sample"
-              description="Apply 3 drops of patient sample to cartridge well"
+              description="Apply 4 drops to cartridge well"
               status="warning"
             />
 
@@ -760,37 +758,27 @@ export default function Workflow() {
         return (
           <div className="flex flex-col h-full max-w-sm mx-auto pb-4">
             <div className="flex-1 space-y-3 pt-2">
-              <div className="text-center">
-                <h2 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">SAA2 Result</h2>
-                <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-5xl font-mono font-bold tracking-tighter">{result.saa2}</span>
-                  <span className="text-lg font-medium text-muted-foreground">mg/L</span>
-                </div>
-              </div>
-
               <div className="space-y-3">
-                <div className="grid grid-cols-2 gap-2">
-                  <div className={cn(
-                    "p-3 rounded-xl border-2 text-center",
-                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
-                  )}>
-                    <span className="text-[10px] font-bold uppercase opacity-60 block">Probability of Severe Infection</span>
-                    <p className={cn(
-                      "text-xl font-bold",
-                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
-                    )} data-testid="text-severe-probability">{severeProbability}</p>
-                  </div>
+                <div className={cn(
+                  "p-4 rounded-xl border-2 text-center",
+                  isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
+                )}>
+                  <span className="text-xs font-bold uppercase opacity-60 block">Probability of Severe Infection</span>
+                  <p className={cn(
+                    "text-2xl font-bold mt-1",
+                    isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
+                  )} data-testid="text-severe-probability">{severeProbability}</p>
+                </div>
 
-                  <div className={cn(
-                    "p-3 rounded-xl border-2 text-center",
-                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
-                  )}>
-                    <span className="text-[10px] font-bold uppercase opacity-60 block">Recommended ESI</span>
-                    <p className={cn(
-                      "text-2xl font-bold",
-                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
-                    )} data-testid="text-recommended-esi">{recommendedESI}</p>
-                  </div>
+                <div className={cn(
+                  "p-4 rounded-xl border-2 text-center",
+                  isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
+                )}>
+                  <span className="text-xs font-bold uppercase opacity-60 block">Recommended ESI</span>
+                  <p className={cn(
+                    "text-2xl font-bold mt-1",
+                    isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
+                  )} data-testid="text-recommended-esi">{recommendedESI}</p>
                 </div>
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
