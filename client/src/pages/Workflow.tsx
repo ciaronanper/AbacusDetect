@@ -926,9 +926,9 @@ export default function Workflow() {
               </div>
               
               <div className="text-center space-y-2">
-                <h2 className="text-2xl font-display font-bold">Cleo</h2>
+                <h2 className="text-2xl font-display font-bold">CLEO</h2>
                 <p className="text-muted-foreground">
-                  Hi, I'm Cleo, your virtual nurse. How can I help you today?
+                  Hi, I'm CLEO, your virtual nurse. How can I help you today?
                 </p>
               </div>
               
