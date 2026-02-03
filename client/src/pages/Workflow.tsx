@@ -231,7 +231,6 @@ export default function Workflow() {
           <div className="flex flex-col items-center justify-center h-full gap-8">
             <div className="text-center space-y-4">
               <img src={logoPng} alt="Abacus Labs" className="h-40 w-auto mx-auto object-contain" />
-              <p className="text-muted-foreground font-medium tracking-wide">SAA2 Reader System</p>
             </div>
             
             <button 
