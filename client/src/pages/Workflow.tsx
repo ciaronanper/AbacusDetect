@@ -18,7 +18,11 @@ import {
   Thermometer,
   Heart,
   Wind,
-  Loader2
+  Loader2,
+  Mic,
+  MicOff,
+  Bot,
+  ArrowLeft
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +57,7 @@ type Step =
   | "test-progress"
   | "test-complete"
   | "results"
+  | "cleo"
   | "uploading"
   | "upload-confirm"
   | "local-save-confirm";
@@ -96,6 +101,8 @@ export default function Workflow() {
   const [resultNote, setResultNote] = useState("");
   const [resultDateTime, setResultDateTime] = useState<Date | null>(null);
   const [vitals, setVitals] = useState<Vitals>({ temperature: "", spO2: "", respiratoryRate: "" });
+  const [cleoTranscript, setCleoTranscript] = useState("");
+  const [isRecording, setIsRecording] = useState(false);
   const { toast } = useToast();
   const createResult = useCreateResult();
 
@@ -834,14 +841,15 @@ export default function Workflow() {
                 </div>
 
                 <div className="pt-2 border-t border-border">
-                  <label className="block text-xs font-bold text-muted-foreground mb-1">Add Note</label>
-                  <Textarea
-                    placeholder="Enter any additional notes here..."
-                    value={resultNote}
-                    onChange={(e) => setResultNote(e.target.value)}
-                    className="min-h-[60px] text-sm"
-                    data-testid="textarea-result-note"
-                  />
+                  <ActionButton 
+                    fullWidth 
+                    variant="outline" 
+                    onClick={() => setStep("cleo")}
+                    data-testid="button-cleo"
+                  >
+                    <Bot className="w-5 h-5 mr-2" />
+                    CLEO - AI Nurse
+                  </ActionButton>
                 </div>
               </div>
             </div>
@@ -852,6 +860,115 @@ export default function Workflow() {
               </ActionButton>
               <ActionButton fullWidth variant="outline" onClick={() => setStep("local-save-confirm")} data-testid="button-store-locally">
                 Store Data Locally
+              </ActionButton>
+            </div>
+          </div>
+        );
+
+      case "cleo":
+        const startRecording = async () => {
+          try {
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+              toast({
+                title: "Not Supported",
+                description: "Voice recognition is not supported in this browser.",
+                variant: "destructive"
+              });
+              return;
+            }
+            
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            
+            recognition.onresult = (event: any) => {
+              let transcript = '';
+              for (let i = 0; i < event.results.length; i++) {
+                transcript += event.results[i][0].transcript;
+              }
+              setCleoTranscript(transcript);
+            };
+            
+            recognition.onerror = () => {
+              setIsRecording(false);
+            };
+            
+            recognition.onend = () => {
+              setIsRecording(false);
+            };
+            
+            (window as any).currentRecognition = recognition;
+            recognition.start();
+            setIsRecording(true);
+          } catch (error) {
+            toast({
+              title: "Error",
+              description: "Could not start voice recognition.",
+              variant: "destructive"
+            });
+          }
+        };
+        
+        const stopRecording = () => {
+          if ((window as any).currentRecognition) {
+            (window as any).currentRecognition.stop();
+          }
+          setIsRecording(false);
+        };
+        
+        return (
+          <div className="flex flex-col h-full max-w-sm mx-auto pb-4">
+            <div className="flex-1 flex flex-col items-center justify-center gap-6 pt-4">
+              <div className="w-24 h-24 bg-primary/10 rounded-full flex items-center justify-center">
+                <Bot className="w-12 h-12 text-primary" />
+              </div>
+              
+              <div className="text-center space-y-2">
+                <h2 className="text-2xl font-display font-bold">Cleo</h2>
+                <p className="text-muted-foreground">
+                  Hi, I'm Cleo, your virtual nurse. How can I help you today?
+                </p>
+              </div>
+              
+              <button
+                onClick={isRecording ? stopRecording : startRecording}
+                className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
+                  isRecording 
+                    ? "bg-red-500 animate-pulse" 
+                    : "bg-primary hover:bg-primary/90"
+                }`}
+                data-testid="button-voice"
+              >
+                {isRecording ? (
+                  <MicOff className="w-8 h-8 text-white" />
+                ) : (
+                  <Mic className="w-8 h-8 text-white" />
+                )}
+              </button>
+              
+              <p className="text-xs text-muted-foreground">
+                {isRecording ? "Tap to stop recording" : "Tap to speak"}
+              </p>
+              
+              {cleoTranscript && (
+                <div className="w-full bg-card border border-border rounded-xl p-4 mt-4">
+                  <p className="text-sm font-medium text-muted-foreground mb-1">Your message:</p>
+                  <p className="text-base" data-testid="text-transcript">{cleoTranscript}</p>
+                </div>
+              )}
+            </div>
+            
+            <div className="pt-4">
+              <ActionButton 
+                fullWidth 
+                variant="outline" 
+                onClick={() => setStep("results")}
+                data-testid="button-return-results"
+              >
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Return to Results
               </ActionButton>
             </div>
           </div>
