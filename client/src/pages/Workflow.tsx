@@ -843,7 +843,6 @@ export default function Workflow() {
                 <div className="pt-2 border-t border-border">
                   <ActionButton 
                     fullWidth 
-                    variant="outline" 
                     onClick={() => setStep("cleo")}
                     data-testid="button-cleo"
                   >
@@ -855,7 +854,7 @@ export default function Workflow() {
             </div>
 
             <div className="pt-3 space-y-2">
-              <ActionButton fullWidth onClick={() => setStep("uploading")} data-testid="button-upload-ehr">
+              <ActionButton fullWidth variant="outline" onClick={() => setStep("uploading")} data-testid="button-upload-ehr">
                 Upload Data to EHR
               </ActionButton>
               <ActionButton fullWidth variant="outline" onClick={() => setStep("local-save-confirm")} data-testid="button-store-locally">
