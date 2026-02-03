@@ -848,7 +848,7 @@ export default function Workflow() {
                     data-testid="button-cleo"
                   >
                     <Bot className="w-5 h-5 mr-2" />
-                    CLEO - AI Nurse
+                    CLEO - Virtual Nurse
                   </ActionButton>
                 </div>
               </div>
