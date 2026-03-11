@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Power, 
@@ -102,6 +102,8 @@ export default function Workflow() {
   const [vitals, setVitals] = useState<Vitals>({ temperature: "", spO2: "", respiratoryRate: "" });
   const [cleoTranscript, setCleoTranscript] = useState("");
   const [isRecording, setIsRecording] = useState(false);
+  const [resultPage, setResultPage] = useState(0);
+  const resultTouchStartX = useRef<number | null>(null);
   const { toast } = useToast();
   const createResult = useCreateResult();
 
@@ -179,6 +181,7 @@ export default function Workflow() {
           interpretation: newResult.interpretation
         });
 
+        setResultPage(0);
         setStep("results");
       }, 5000);
     } else if (step === "uploading") {
@@ -739,9 +742,12 @@ export default function Workflow() {
         const isHighRisk = severeProbability === "High";
         const isMedRisk = severeProbability === "Medium";
         
-        return (
-          <div className="flex flex-col h-full max-w-sm mx-auto pb-4">
-            <div className="flex-1 space-y-3 pt-2">
+        const resultPageContent = (pageIndex: number) => (
+          <div className="flex flex-col h-full pb-4 relative">
+            <span className="absolute top-0 right-0 text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-bl-lg rounded-tr-lg z-10">
+              Result Screen {pageIndex + 1}/3
+            </span>
+            <div className="flex-1 space-y-3 pt-2 overflow-y-auto">
               <div className="space-y-3">
                 <div className={cn(
                   "p-4 rounded-xl border-2 text-center",
@@ -751,7 +757,7 @@ export default function Workflow() {
                   <p className={cn(
                     "text-2xl font-bold mt-1",
                     isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
-                  )} data-testid="text-severe-probability">{severeProbability}</p>
+                  )} data-testid={`text-severe-probability-${pageIndex}`}>{severeProbability}</p>
                 </div>
 
                 <div className={cn(
@@ -762,11 +768,11 @@ export default function Workflow() {
                   <p className={cn(
                     "text-2xl font-bold mt-1",
                     isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
-                  )} data-testid="text-saa2-level">{result.saa2} <span className="text-sm font-normal">mg/L</span></p>
+                  )} data-testid={`text-saa2-level-${pageIndex}`}>{result.saa2} <span className="text-sm font-normal">mg/L</span></p>
                 </div>
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
-                  <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid="card-vitals">
+                  <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid={`card-vitals-${pageIndex}`}>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Patient Vitals</span>
                     <div className="grid grid-cols-3 gap-2 text-center">
                       <div>
@@ -774,21 +780,21 @@ export default function Workflow() {
                           <Thermometer className="w-3 h-3" />
                           <span className="text-[10px]">Temp</span>
                         </div>
-                        <p className="text-base font-mono font-bold" data-testid="text-temperature">{vitals.temperature}°F</p>
+                        <p className="text-base font-mono font-bold">{vitals.temperature}°F</p>
                       </div>
                       <div>
                         <div className="flex items-center justify-center gap-1 text-muted-foreground">
                           <Heart className="w-3 h-3" />
                           <span className="text-[10px]">SpO₂</span>
                         </div>
-                        <p className="text-base font-mono font-bold" data-testid="text-spo2">{vitals.spO2}%</p>
+                        <p className="text-base font-mono font-bold">{vitals.spO2}%</p>
                       </div>
                       <div>
                         <div className="flex items-center justify-center gap-1 text-muted-foreground">
                           <Wind className="w-3 h-3" />
                           <span className="text-[10px]">Resp</span>
                         </div>
-                        <p className="text-base font-mono font-bold" data-testid="text-respiratory-rate">{vitals.respiratoryRate}</p>
+                        <p className="text-base font-mono font-bold">{vitals.respiratoryRate}</p>
                       </div>
                     </div>
                   </div>
@@ -837,6 +843,47 @@ export default function Workflow() {
               <ActionButton fullWidth variant="outline" onClick={() => setStep("local-save-confirm")} data-testid="button-store-locally">
                 Store Data Locally
               </ActionButton>
+            </div>
+          </div>
+        );
+
+        return (
+          <div className="flex flex-col h-full max-w-sm mx-auto">
+            <div
+              className="flex-1 overflow-hidden relative"
+              onTouchStart={(e) => { resultTouchStartX.current = e.touches[0].clientX; }}
+              onTouchEnd={(e) => {
+                if (resultTouchStartX.current === null) return;
+                const delta = resultTouchStartX.current - e.changedTouches[0].clientX;
+                if (delta > 50 && resultPage < 2) setResultPage(p => p + 1);
+                if (delta < -50 && resultPage > 0) setResultPage(p => p - 1);
+                resultTouchStartX.current = null;
+              }}
+            >
+              <div
+                className="flex h-full transition-transform duration-300 ease-in-out"
+                style={{ width: "300%", transform: `translateX(-${resultPage * (100 / 3)}%)` }}
+              >
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-full" style={{ width: "33.333%" }}>
+                    {resultPageContent(i)}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex justify-center gap-2 py-2">
+              {[0, 1, 2].map((i) => (
+                <button
+                  key={i}
+                  onClick={() => setResultPage(i)}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-colors",
+                    resultPage === i ? "bg-primary" : "bg-muted-foreground/30"
+                  )}
+                  data-testid={`dot-result-page-${i}`}
+                />
+              ))}
             </div>
           </div>
         );
