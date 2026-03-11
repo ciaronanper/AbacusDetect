@@ -746,7 +746,7 @@ export default function Workflow() {
         const ibiPercentage = Math.min(99, Math.round((result.saa2 / 500) * 100));
 
         // SAA2 threshold label for screen 3
-        const saa2Threshold = result.saa2 > 200 ? "> 200 mg/L" : result.saa2 < 10 ? "< 10 mg/L" : "10 – 200 mg/L";
+        const saa2Threshold = result.saa2 > 200 ? "> 200 mg/L" : result.saa2 < 10 ? "< 10 mg/L" : `${result.saa2} mg/L`;
         
         const resultPageContent = (pageIndex: number) => (
           <div className="flex flex-col h-full pb-4 relative">
