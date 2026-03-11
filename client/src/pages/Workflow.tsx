@@ -29,7 +29,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ActionButton } from "@/components/ActionButton";
 import { StatusCard } from "@/components/StatusCard";
 import { Header } from "@/components/Header";
-import { FaceDetection } from "@/components/FaceDetection";
 import { QRScanner } from "@/components/QRScanner";
 import { useCreateResult } from "@/hooks/use-results";
 import { useToast } from "@/hooks/use-toast";
@@ -97,7 +96,7 @@ export default function Workflow() {
   const [result, setResult] = useState<TestResult | null>(null);
   const [nurseIdInput, setNurseIdInput] = useState("");
   const [confirmedNurseId, setConfirmedNurseId] = useState("");
-  const [nurseAuthMethod, setNurseAuthMethod] = useState<"scan" | "face" | "input">("scan");
+  const [nurseAuthMethod, setNurseAuthMethod] = useState<"scan" | "input">("scan");
   const [resultNote, setResultNote] = useState("");
   const [resultDateTime, setResultDateTime] = useState<Date | null>(null);
   const [vitals, setVitals] = useState<Vitals>({ temperature: "", spO2: "", respiratoryRate: "" });
@@ -285,29 +284,13 @@ export default function Workflow() {
             <div className="w-full space-y-4">
               <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-scan")}>
                 <ScanLine className="w-5 h-5 mr-2" />
-                Scan Nurse QR / Barcode
-              </ActionButton>
-              <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-face-id")}>
-                <User className="w-5 h-5 mr-2" />
-                Face ID
+                Scan Nurse QR
               </ActionButton>
               <ActionButton variant="outline" fullWidth onClick={() => setStep("nurse-id-input")}>
                 Input Nurse ID number
               </ActionButton>
             </div>
           </div>
-        );
-
-      case "nurse-face-id":
-        return (
-          <FaceDetection 
-            onComplete={() => {
-              setNurseAuthMethod("face");
-              setConfirmedNurseId(generateNurseId());
-              setStep("nurse-confirm");
-            }}
-            onCancel={() => setStep("nurse-auth-choice")}
-          />
         );
 
       case "nurse-scan":
@@ -411,8 +394,6 @@ export default function Workflow() {
                 if (nurseAuthMethod === "input") {
                   setNurseIdInput("");
                   setStep("nurse-id-input");
-                } else if (nurseAuthMethod === "face") {
-                  setStep("nurse-face-id");
                 } else {
                   setStep("nurse-scan");
                 }
@@ -717,7 +698,7 @@ export default function Workflow() {
 
             <div className="w-full pt-4">
               <ActionButton variant="ghost" fullWidth onClick={skipTimer} className="text-muted-foreground hover:text-foreground">
-                Skip Timer (Debug)
+                Skip Timer
               </ActionButton>
             </div>
           </div>
@@ -744,19 +725,15 @@ export default function Workflow() {
       case "results":
         if (!result) return null;
         
-        // Calculate probability and ESI based on SAA2
+        // Calculate probability based on SAA2
         let severeProbability: "High" | "Medium" | "Low";
-        let recommendedESI: 2 | 3 | 4;
         
         if (result.saa2 > 200) {
           severeProbability = "High";
-          recommendedESI = 2;
         } else if (result.saa2 > 100) {
           severeProbability = "Medium";
-          recommendedESI = 3;
         } else {
           severeProbability = "Low";
-          recommendedESI = 4;
         }
         
         const isHighRisk = severeProbability === "High";
@@ -781,11 +758,11 @@ export default function Workflow() {
                   "p-4 rounded-xl border-2 text-center",
                   isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
                 )}>
-                  <span className="text-xs font-bold uppercase opacity-60 block">Recommended ESI</span>
+                  <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
                   <p className={cn(
                     "text-2xl font-bold mt-1",
                     isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
-                  )} data-testid="text-recommended-esi">{recommendedESI}</p>
+                  )} data-testid="text-saa2-level">{result.saa2} <span className="text-sm font-normal">mg/L</span></p>
                 </div>
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
