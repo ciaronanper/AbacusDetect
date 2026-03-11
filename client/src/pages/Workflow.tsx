@@ -741,6 +741,12 @@ export default function Workflow() {
         
         const isHighRisk = severeProbability === "High";
         const isMedRisk = severeProbability === "Medium";
+
+        // Likelihood of Invasive Bacterial Infection percentage derived from SAA2
+        const ibiPercentage = Math.min(99, Math.round((result.saa2 / 500) * 100));
+
+        // SAA2 threshold label for screen 3
+        const saa2Threshold = result.saa2 > 200 ? "> 200 mg/L" : result.saa2 < 10 ? "< 10 mg/L" : "10 – 200 mg/L";
         
         const resultPageContent = (pageIndex: number) => (
           <div className="flex flex-col h-full pb-4 relative">
@@ -749,27 +755,55 @@ export default function Workflow() {
             </span>
             <div className="flex-1 space-y-3 pt-2 overflow-y-auto">
               <div className="space-y-3">
-                <div className={cn(
-                  "p-4 rounded-xl border-2 text-center",
-                  isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
-                )}>
-                  <span className="text-xs font-bold uppercase opacity-60 block">Probability of Severe Infection</span>
-                  <p className={cn(
-                    "text-2xl font-bold mt-1",
-                    isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
-                  )} data-testid={`text-severe-probability-${pageIndex}`}>{severeProbability}</p>
-                </div>
+                {/* Top card — differs per screen */}
+                {pageIndex === 0 ? (
+                  <div className={cn(
+                    "p-4 rounded-xl border-2 text-center",
+                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
+                  )}>
+                    <span className="text-xs font-bold uppercase opacity-60 block">Probability of Severe Infection</span>
+                    <p className={cn(
+                      "text-2xl font-bold mt-1",
+                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
+                    )} data-testid="text-severe-probability">{severeProbability}</p>
+                  </div>
+                ) : (
+                  <div className={cn(
+                    "p-4 rounded-xl border-2 text-center",
+                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
+                  )}>
+                    <span className="text-xs font-bold uppercase opacity-60 block">Likelihood of Invasive Bacterial Infection</span>
+                    <p className={cn(
+                      "text-3xl font-bold mt-1",
+                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
+                    )} data-testid={`text-ibi-percentage-${pageIndex}`}>{ibiPercentage}<span className="text-lg font-normal">%</span></p>
+                  </div>
+                )}
 
-                <div className={cn(
-                  "p-4 rounded-xl border-2 text-center",
-                  isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
-                )}>
-                  <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
-                  <p className={cn(
-                    "text-2xl font-bold mt-1",
-                    isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
-                  )} data-testid={`text-saa2-level-${pageIndex}`}>{result.saa2} <span className="text-sm font-normal">mg/L</span></p>
-                </div>
+                {/* Second card — SAA2 raw (screens 1 & 2) or threshold (screen 3) */}
+                {pageIndex < 2 ? (
+                  <div className={cn(
+                    "p-4 rounded-xl border-2 text-center",
+                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
+                  )}>
+                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
+                    <p className={cn(
+                      "text-2xl font-bold mt-1",
+                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
+                    )} data-testid={`text-saa2-level-${pageIndex}`}>{result.saa2} <span className="text-sm font-normal">mg/L</span></p>
+                  </div>
+                ) : (
+                  <div className={cn(
+                    "p-4 rounded-xl border-2 text-center",
+                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
+                  )}>
+                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Threshold</span>
+                    <p className={cn(
+                      "text-2xl font-bold mt-1",
+                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
+                    )} data-testid="text-saa2-threshold">{saa2Threshold}</p>
+                  </div>
+                )}
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
                   <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid={`card-vitals-${pageIndex}`}>
