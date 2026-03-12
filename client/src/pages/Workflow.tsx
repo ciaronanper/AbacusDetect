@@ -879,8 +879,8 @@ export default function Workflow() {
             </div>
             <div className="flex-1 space-y-3 overflow-y-auto">
               <div className="space-y-3">
-                {/* Top card — screen 2 (index 1) shows Likelihood %; screens 1 & 3 show Probability */}
-                {pageIndex === 1 ? (
+                {/* Top card — screen 3 (index 2) shows Likelihood %; screens 1 & 2 show Probability */}
+                {pageIndex === 2 ? (
                   <div className={cn(
                     "p-4 rounded-xl border-2 text-center",
                     isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
