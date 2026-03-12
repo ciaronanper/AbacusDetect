@@ -784,7 +784,23 @@ export default function Workflow() {
             <span className="absolute top-0 right-0 text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-bl-lg rounded-tr-lg z-10">
               Result Screen {pageIndex + 1}/3
             </span>
-            <div className="flex-1 space-y-3 pt-2 overflow-y-auto">
+            <div className="bg-muted/60 border border-border rounded-xl px-3 py-2 mb-2 flex items-center justify-between text-xs text-muted-foreground" data-testid="card-patient-info-header">
+              <div>
+                <span className="font-bold text-foreground block">{MOCK_PATIENT}</span>
+                <span className="uppercase tracking-wide">Patient ID</span>
+              </div>
+              <div className="text-center">
+                <span className="font-bold text-foreground block">{confirmedNurseId}</span>
+                <span className="uppercase tracking-wide">Nurse</span>
+              </div>
+              {resultDateTime && (
+                <div className="text-right">
+                  <span className="font-bold text-foreground block">{resultDateTime.toLocaleDateString()}</span>
+                  <span>{resultDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 space-y-3 overflow-y-auto">
               <div className="space-y-3">
                 {/* Top card — differs per screen */}
                 {pageIndex === 0 ? (
@@ -828,7 +844,7 @@ export default function Workflow() {
                     "p-4 rounded-xl border-2 text-center",
                     isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
                   )}>
-                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Threshold</span>
+                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
                     <p className={cn(
                       "text-2xl font-bold mt-1",
                       isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
@@ -865,29 +881,6 @@ export default function Workflow() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground pt-2 border-t border-border">
-                  <div>
-                    <span className="block font-bold">Patient</span>
-                    <span className="font-mono">{MOCK_PATIENT}</span>
-                  </div>
-                  <div>
-                    <span className="block font-bold">Nurse</span>
-                    <span className="font-mono">{confirmedNurseId}</span>
-                  </div>
-                  {resultDateTime && (
-                    <>
-                      <div>
-                        <span className="block font-bold">Date</span>
-                        <span>{resultDateTime.toLocaleDateString()}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="block font-bold">Time</span>
-                        <span>{resultDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-
                 <div className="pt-2 border-t border-border space-y-2">
                   <ActionButton
                     fullWidth
@@ -910,7 +903,7 @@ export default function Workflow() {
 
             <div className="pt-3 space-y-2">
               <ActionButton fullWidth variant="outline" onClick={() => setStep("uploading")} data-testid="button-upload-ehr">
-                Upload Data to EHR
+                Upload Data to Health Record
               </ActionButton>
               <ActionButton fullWidth variant="outline" onClick={() => setStep("local-save-confirm")} data-testid="button-store-locally">
                 Store Data Locally
