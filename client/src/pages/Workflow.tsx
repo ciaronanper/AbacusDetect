@@ -792,16 +792,16 @@ export default function Workflow() {
         // Severity score + IBI% derived from the SAME band as severeProbability.
         // Non-linear: SAA2 ≥60 must land at gauge ≥30 (red "Rule in" zone).
         //
-        // Band        → gauge (0-50) → IBI %
-        // Low      <5 → 0–10         → 1–10%
-        // Moderate 5–60 → 10–20      → 10–35%
-        // High  60–200  → 30–42      → 55–82%   (hard jump into red at 60 mg/L)
-        // Very High >200 → 42–50     → 82–99%
+        // Band        → gauge (0-50)
+        // Low      <5  → 0–10   (green)
+        // Moderate 5–60 → 10–28 (green→orange; SAA2=40 ≈ 21, well into orange)
+        // High  60–200  → 30–42 (hard jump into red at 60 mg/L)
+        // Very High >200 → 42–50
         const severityScore = (() => {
           const s = result.saa2;
           if (severeProbability === "Very High") return 42 + Math.round(((Math.min(s, 500) - 201) / 299) * 8);
           if (severeProbability === "High")      return 30 + Math.round(((s - 60) / 140) * 12);
-          if (severeProbability === "Moderate")  return 10 + Math.round(((s - 5)  / 55)  * 10);
+          if (severeProbability === "Moderate")  return 10 + Math.round(((s - 5)  / 55)  * 18);
           return Math.round((s / 5) * 10);
         })();
         const severityLabel =
