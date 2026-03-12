@@ -788,8 +788,13 @@ export default function Workflow() {
 
         const reasoning = buildReasoning();
 
-        // Severity score: maps SAA2 (0-500) to 0-50 scale
-        const severityScore = Math.min(50, Math.round(result.saa2 / 10));
+        // Severity score: banded to stay consistent with SAA2/probability risk level
+        // High (SAA2>200) → 40-50, Medium (100-200) → 20-39, Low (0-100) → 0-19
+        const severityScore = (() => {
+          if (result.saa2 > 200) return 40 + Math.round(((result.saa2 - 201) / 299) * 10);
+          if (result.saa2 > 100) return 20 + Math.round(((result.saa2 - 101) / 99) * 19);
+          return Math.round((result.saa2 / 100) * 19);
+        })();
         const severityLabel =
           severityScore >= 40 ? "Very High" :
           severityScore >= 30 ? "High" :
