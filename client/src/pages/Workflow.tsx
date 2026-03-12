@@ -855,7 +855,7 @@ export default function Workflow() {
               </div>
               {resultDateTime && (
                 <div className="text-right">
-                  <span className="font-bold text-foreground block">{resultDateTime.toLocaleDateString()}</span>
+                  <span className="block">{resultDateTime.toLocaleDateString()}</span>
                   <span>{resultDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
               )}
@@ -952,13 +952,13 @@ export default function Workflow() {
                     <div className="flex gap-2 mt-3">
                       <div
                         className="flex-1 flex items-center justify-center text-white text-xs font-bold"
-                        style={{ clipPath: "polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}
+                        style={{ clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}
                       >
                         ← Rule out
                       </div>
                       <div
                         className="flex-1 flex items-center justify-center text-white text-xs font-bold"
-                        style={{ clipPath: "polygon(0% 0%, 92% 0%, 100% 50%, 92% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}
+                        style={{ clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}
                       >
                         Rule in →
                       </div>
