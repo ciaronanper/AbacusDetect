@@ -789,28 +789,28 @@ export default function Workflow() {
 
         const reasoning = buildReasoning();
 
-        // Severity score + IBI% derived from the SAME band as severeProbability
-        // so all three metrics stay consistent with each other.
+        // Severity score + IBI% derived from the SAME band as severeProbability.
+        // Non-linear: SAA2 ≥60 must land at gauge ≥30 (red "Rule in" zone).
         //
-        // Band → gauge (0-50) → IBI %
-        // Low      → 0-10   → 1-10%
-        // Moderate → 10-20  → 10-35%
-        // High     → 25-38  → 55-82%   (big jump reflects 3.5× clinical LR)
-        // Very High→ 38-50  → 82-99%   (8× clinical LR)
+        // Band        → gauge (0-50) → IBI %
+        // Low      <5 → 0–10         → 1–10%
+        // Moderate 5–60 → 10–20      → 10–35%
+        // High  60–200  → 30–42      → 55–82%   (hard jump into red at 60 mg/L)
+        // Very High >200 → 42–50     → 82–99%
         const severityScore = (() => {
           const s = result.saa2;
-          if (severeProbability === "Very High") return 38 + Math.round(((Math.min(s, 500) - 201) / 299) * 12);
-          if (severeProbability === "High")      return 25 + Math.round(((s - 60) / 140) * 13);
+          if (severeProbability === "Very High") return 42 + Math.round(((Math.min(s, 500) - 201) / 299) * 8);
+          if (severeProbability === "High")      return 30 + Math.round(((s - 60) / 140) * 12);
           if (severeProbability === "Moderate")  return 10 + Math.round(((s - 5)  / 55)  * 10);
           return Math.round((s / 5) * 10);
         })();
         const severityLabel =
-          severityScore >= 38 ? "Very High" :
-          severityScore >= 25 ? "High" :
+          severityScore >= 42 ? "Very High" :
+          severityScore >= 30 ? "High" :
           severityScore >= 10 ? "Moderate" : "Low";
         const severityBadgeColor =
-          severityScore >= 38 ? "bg-red-600" :
-          severityScore >= 25 ? "bg-orange-500" :
+          severityScore >= 42 ? "bg-red-600" :
+          severityScore >= 30 ? "bg-orange-500" :
           severityScore >= 10 ? "bg-amber-400" : "bg-green-500";
         const pinLeft = `clamp(12px, calc(${(severityScore / 50) * 100}% - 12px), calc(100% - 12px))`;
 
