@@ -951,14 +951,14 @@ export default function Workflow() {
                     {/* Rule out / Rule in key */}
                     <div className="flex gap-2 mt-3">
                       <div
-                        className="flex-1 flex items-center justify-center py-1 text-white text-xs font-bold"
-                        style={{ clipPath: "polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%)", background: "#22c55e" }}
+                        className="flex-1 flex items-center justify-center text-white text-[10px] font-bold"
+                        style={{ clipPath: "polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%)", background: "#22c55e", height: "22px" }}
                       >
                         ← Rule out
                       </div>
                       <div
-                        className="flex-1 flex items-center justify-center py-1 text-white text-xs font-bold"
-                        style={{ clipPath: "polygon(0% 0%, 92% 0%, 100% 50%, 92% 100%, 0% 100%)", background: "#ef4444" }}
+                        className="flex-1 flex items-center justify-center text-white text-[10px] font-bold"
+                        style={{ clipPath: "polygon(0% 0%, 92% 0%, 100% 50%, 92% 100%, 0% 100%)", background: "#ef4444", height: "22px" }}
                       >
                         Rule in →
                       </div>
