@@ -973,12 +973,12 @@ export default function Workflow() {
                       <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
                     </div>
                   </div>
-                ) : pageIndex === 1 ? (
+                ) : (
                   <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid={`card-reasoning-${pageIndex}`}>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Clinical Reasoning</span>
                     <p className="text-sm text-foreground leading-relaxed">{reasoning}</p>
                   </div>
-                ) : null}
+                )}
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
                   <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid={`card-vitals-${pageIndex}`}>
