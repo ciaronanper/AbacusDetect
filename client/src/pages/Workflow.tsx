@@ -788,6 +788,18 @@ export default function Workflow() {
 
         const reasoning = buildReasoning();
 
+        // Severity score: maps SAA2 (0-500) to 0-50 scale
+        const severityScore = Math.min(50, Math.round(result.saa2 / 10));
+        const severityLabel =
+          severityScore >= 40 ? "Very High" :
+          severityScore >= 30 ? "High" :
+          severityScore >= 20 ? "Moderate" : "Low";
+        const severityBadgeColor =
+          severityScore >= 40 ? "bg-red-500" :
+          severityScore >= 30 ? "bg-orange-500" :
+          severityScore >= 20 ? "bg-amber-400" : "bg-green-500";
+        const pinLeft = `clamp(12px, calc(${(severityScore / 50) * 100}% - 12px), calc(100% - 12px))`;
+
         const startNotesRecording = async () => {
           try {
             const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -895,11 +907,49 @@ export default function Workflow() {
                   </div>
                 )}
 
-                {/* Reasoning card */}
-                <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid={`card-reasoning-${pageIndex}`}>
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Clinical Reasoning</span>
-                  <p className="text-sm text-foreground leading-relaxed">{reasoning}</p>
-                </div>
+                {/* Screen 1: severity gauge; screens 2 & 3: clinical reasoning */}
+                {pageIndex === 0 ? (
+                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Illness Severity Score</span>
+                      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full text-white", severityBadgeColor)}>
+                        {severityLabel}
+                      </span>
+                    </div>
+                    {/* Pin + bar */}
+                    <div className="relative px-1">
+                      {/* Pin circle */}
+                      <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
+                        <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[10px] font-bold shadow-md text-gray-800">
+                          {severityScore}
+                        </div>
+                        <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-gray-400" />
+                      </div>
+                      {/* Coloured bar */}
+                      <div className="flex h-4 rounded-lg overflow-hidden mt-8">
+                        <div className="bg-green-500" style={{ width: "20%" }} />
+                        <div className="bg-green-400" style={{ width: "20%" }} />
+                        <div className="bg-amber-400" style={{ width: "20%" }} />
+                        <div className="bg-orange-500" style={{ width: "20%" }} />
+                        <div className="bg-red-600" style={{ width: "20%" }} />
+                      </div>
+                    </div>
+                    {/* Scale labels */}
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
+                      <span>0</span>
+                      <span>10</span>
+                      <span>20</span>
+                      <span>30</span>
+                      <span>40</span>
+                      <span>50</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid={`card-reasoning-${pageIndex}`}>
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Clinical Reasoning</span>
+                    <p className="text-sm text-foreground leading-relaxed">{reasoning}</p>
+                  </div>
+                )}
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
                   <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid={`card-vitals-${pageIndex}`}>
