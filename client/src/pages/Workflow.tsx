@@ -975,7 +975,7 @@ export default function Workflow() {
                   </div>
                 )}
 
-                {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
+                {pageIndex === 0 && vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
                   <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid={`card-vitals-${pageIndex}`}>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Patient Vitals</span>
                     <div className="grid grid-cols-3 gap-2 text-center">
