@@ -797,12 +797,12 @@ export default function Workflow() {
           const k = 0.00716; // tuned so SAA2=300 → ~9.5, SAA2=1000 → ~10
           return Math.round(Math.min(10, 7 + 3 * (1 - Math.exp(-k * (s - 50)))) * 10) / 10;
         })();
-        // Labels/colours match gauge zones: green 0–4 = Low, yellow 4–7 = Moderate, red 7–10 = High
+        // Labels/colours match gauge zones: green 0–4 = Low, yellow 4–6 = Moderate, red 6–10 = High
         const severityLabel =
-          severityScore >= 7 ? "High" :
+          severityScore >= 6 ? "High" :
           severityScore >= 4 ? "Moderate" : "Low";
         const severityBadgeColor =
-          severityScore >= 7 ? "bg-red-500" :
+          severityScore >= 6 ? "bg-red-500" :
           severityScore >= 4 ? "bg-amber-400" : "bg-green-500";
         const pinLeft = `clamp(12px, calc(${(severityScore / 10) * 100}% - 12px), calc(100% - 12px))`;
 
@@ -908,8 +908,8 @@ export default function Workflow() {
                       <div className="mt-8 rounded-lg border border-gray-300 overflow-hidden">
                         <div className="flex h-4">
                           <div className="bg-green-500" style={{ width: "40%" }} />
-                          <div className="bg-yellow-400" style={{ width: "30%" }} />
-                          <div className="bg-red-500" style={{ width: "30%" }} />
+                          <div className="bg-yellow-400" style={{ width: "20%" }} />
+                          <div className="bg-red-500" style={{ width: "40%" }} />
                         </div>
                       </div>
                     </div>
@@ -918,8 +918,8 @@ export default function Workflow() {
                     </div>
                     <div className="flex mt-3">
                       <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}>← Rule out</div>
-                      <div style={{ width: "30%" }} />
-                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "30%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
+                      <div style={{ width: "20%" }} />
+                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
                     </div>
                   </div>
                 ) : (
@@ -949,8 +949,8 @@ export default function Workflow() {
                       <div className="mt-8 rounded-lg border border-gray-300 overflow-hidden">
                         <div className="flex h-4">
                           <div className="bg-green-500" style={{ width: "40%" }} />
-                          <div className="bg-yellow-400" style={{ width: "30%" }} />
-                          <div className="bg-red-500" style={{ width: "30%" }} />
+                          <div className="bg-yellow-400" style={{ width: "20%" }} />
+                          <div className="bg-red-500" style={{ width: "40%" }} />
                         </div>
                       </div>
                     </div>
@@ -959,8 +959,8 @@ export default function Workflow() {
                     </div>
                     <div className="flex mt-3">
                       <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}>← Rule out</div>
-                      <div style={{ width: "30%" }} />
-                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "30%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
+                      <div style={{ width: "20%" }} />
+                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
                     </div>
                   </div>
                 ) : (
