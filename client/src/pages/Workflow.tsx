@@ -59,7 +59,7 @@ type Step =
   | "cleo"
   | "uploading"
   | "upload-confirm"
-  | "local-save-confirm";
+  ;
 
 interface TestResult {
   saa2: number;
@@ -742,6 +742,52 @@ export default function Workflow() {
         const isHighRisk = severeProbability === "High";
         const isMedRisk = severeProbability === "Medium";
 
+        // Generate clinical reasoning text
+        const buildReasoning = (): string => {
+          const parts: string[] = [];
+          const saa2Val = result.saa2;
+
+          // SAA2 contribution
+          if (saa2Val > 200) {
+            parts.push(`SAA2 of ${saa2Val} mg/L is markedly elevated, indicating severe systemic inflammation or infection.`);
+          } else if (saa2Val > 100) {
+            parts.push(`SAA2 of ${saa2Val} mg/L is moderately elevated, suggesting active inflammation or bacterial infection.`);
+          } else if (saa2Val >= 10) {
+            parts.push(`SAA2 of ${saa2Val} mg/L is mildly elevated, which may reflect early-stage or localised inflammation.`);
+          } else {
+            parts.push(`SAA2 of ${saa2Val} mg/L is within normal range, making systemic bacterial infection less likely.`);
+          }
+
+          // Vitals contribution
+          if (vitals.temperature) {
+            const temp = parseFloat(vitals.temperature);
+            if (temp >= 100.4) parts.push(`Fever of ${temp}°F supports an active infectious or inflammatory process.`);
+            else if (temp < 96.8) parts.push(`Hypothermia (${temp}°F) may indicate severe systemic infection or sepsis.`);
+            else parts.push(`Temperature of ${temp}°F is within normal range.`);
+          }
+          if (vitals.spO2) {
+            const spo2 = parseFloat(vitals.spO2);
+            if (spo2 < 90) parts.push(`SpO₂ of ${spo2}% is critically low, suggesting significant respiratory compromise.`);
+            else if (spo2 < 95) parts.push(`SpO₂ of ${spo2}% is below normal, indicating possible respiratory involvement.`);
+            else parts.push(`SpO₂ of ${spo2}% is adequate.`);
+          }
+          if (vitals.respiratoryRate) {
+            const rr = parseFloat(vitals.respiratoryRate);
+            if (rr > 20) parts.push(`Respiratory rate of ${rr} breaths/min is elevated (tachypnoea), consistent with systemic infection.`);
+            else if (rr < 12) parts.push(`Respiratory rate of ${rr} breaths/min is below normal range.`);
+            else parts.push(`Respiratory rate of ${rr} breaths/min is normal.`);
+          }
+
+          // Visual signs
+          if (isHighRisk) parts.push(`Taken together, these findings are consistent with a high likelihood of invasive bacterial infection and potential sepsis. Urgent clinical review is recommended.`);
+          else if (isMedRisk) parts.push(`Overall, findings suggest a moderate likelihood of bacterial infection. Clinical correlation and close monitoring are advised.`);
+          else parts.push(`Combined findings suggest a low likelihood of systemic bacterial infection at this time.`);
+
+          return parts.join(' ');
+        };
+
+        const reasoning = buildReasoning();
+
         const startNotesRecording = async () => {
           try {
             const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -852,6 +898,12 @@ export default function Workflow() {
                   </div>
                 )}
 
+                {/* Reasoning card */}
+                <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid={`card-reasoning-${pageIndex}`}>
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Clinical Reasoning</span>
+                  <p className="text-sm text-foreground leading-relaxed">{reasoning}</p>
+                </div>
+
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
                   <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid={`card-vitals-${pageIndex}`}>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Patient Vitals</span>
@@ -904,9 +956,6 @@ export default function Workflow() {
             <div className="pt-3 space-y-2">
               <ActionButton fullWidth variant="outline" onClick={() => setStep("uploading")} data-testid="button-upload-ehr">
                 Upload Data to Health Record
-              </ActionButton>
-              <ActionButton fullWidth variant="outline" onClick={() => setStep("local-save-confirm")} data-testid="button-store-locally">
-                Store Data Locally
               </ActionButton>
             </div>
           </div>
@@ -1106,30 +1155,6 @@ export default function Workflow() {
           </div>
         );
 
-      case "local-save-confirm":
-        return (
-          <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="w-32 h-32 bg-green-100 rounded-full flex items-center justify-center text-green-600"
-            >
-              <CheckCircle2 className="w-16 h-16" />
-            </motion.div>
-            
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-display font-bold">Data Successfully Saved</h2>
-              <p className="text-muted-foreground">Test data has been stored locally</p>
-            </div>
-
-            <div className="w-full pt-8">
-              <ActionButton fullWidth onClick={restartWorkflow} data-testid="button-new-test">
-                <RotateCcw className="w-5 h-5 mr-2" />
-                New Test
-              </ActionButton>
-            </div>
-          </div>
-        );
     }
   };
 
