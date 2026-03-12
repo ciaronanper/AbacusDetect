@@ -963,17 +963,18 @@ export default function Workflow() {
                       <span>40</span>
                       <span>50</span>
                     </div>
-                    {/* Rule out / Rule in key */}
-                    <div className="flex gap-2 mt-3">
+                    {/* Rule out / Rule in key — widths match gauge bands: green 40%, orange gap 20%, red 40% */}
+                    <div className="flex mt-3">
                       <div
-                        className="flex-1 flex items-center justify-center text-white text-xs font-bold"
-                        style={{ clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}
+                        className="flex items-center justify-center text-white text-xs font-bold"
+                        style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}
                       >
                         ← Rule out
                       </div>
+                      <div style={{ width: "20%" }} />
                       <div
-                        className="flex-1 flex items-center justify-center text-white text-xs font-bold"
-                        style={{ clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}
+                        className="flex items-center justify-center text-white text-xs font-bold"
+                        style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}
                       >
                         Rule in →
                       </div>
