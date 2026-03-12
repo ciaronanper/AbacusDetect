@@ -749,42 +749,37 @@ export default function Workflow() {
           const parts: string[] = [];
           const saa2Val = result.saa2;
 
-          // SAA2 contribution — based on validated clinical thresholds
-          if (saa2Val > 200) {
-            parts.push(`SAA2 of ${saa2Val} mg/L is markedly elevated (>200 mg/L). This is associated with an 8× increased likelihood of serious bacterial infection; the mean SAA2 in serious infection is 256 mg/L.`);
-          } else if (saa2Val >= 60) {
-            parts.push(`SAA2 of ${saa2Val} mg/L is elevated (60–200 mg/L), associated with a 3.5× increased likelihood of serious bacterial infection.`);
-          } else if (saa2Val >= 5) {
-            parts.push(`SAA2 of ${saa2Val} mg/L is in the moderate range (5–60 mg/L). Serious bacterial infection is less likely but cannot be excluded; the mean SAA2 in non-serious infection is 41 mg/L.`);
-          } else {
-            parts.push(`SAA2 of ${saa2Val} mg/L is within normal range (<5 mg/L), which effectively rules out serious bacterial infection.`);
-          }
+          // SAA2
+          if (saa2Val > 200)       parts.push(`SAA2 ${saa2Val} mg/L — markedly elevated (8× serious infection risk).`);
+          else if (saa2Val >= 60)  parts.push(`SAA2 ${saa2Val} mg/L — elevated, 3.5× increased risk of serious infection.`);
+          else if (saa2Val >= 5)   parts.push(`SAA2 ${saa2Val} mg/L — moderate range; serious infection less likely.`);
+          else                      parts.push(`SAA2 ${saa2Val} mg/L — normal; serious bacterial infection effectively ruled out.`);
 
-          // Vitals contribution
+          // Vitals
           if (vitals.temperature) {
             const temp = parseFloat(vitals.temperature);
-            if (temp >= 100.4) parts.push(`Fever of ${temp}°F supports an active infectious or inflammatory process.`);
-            else if (temp < 96.8) parts.push(`Hypothermia (${temp}°F) may indicate severe systemic infection or sepsis.`);
-            else parts.push(`Temperature of ${temp}°F is within normal range.`);
+            if (temp >= 100.4)      parts.push(`Fever ${temp}°F — supports active infection.`);
+            else if (temp < 96.8)   parts.push(`Hypothermia ${temp}°F — possible severe sepsis.`);
+            else                    parts.push(`Temp ${temp}°F — normal.`);
           }
           if (vitals.spO2) {
             const spo2 = parseFloat(vitals.spO2);
-            if (spo2 < 90) parts.push(`SpO₂ of ${spo2}% is critically low, suggesting significant respiratory compromise.`);
-            else if (spo2 < 95) parts.push(`SpO₂ of ${spo2}% is below normal, indicating possible respiratory involvement.`);
-            else parts.push(`SpO₂ of ${spo2}% is adequate.`);
+            if (spo2 < 90)          parts.push(`SpO₂ ${spo2}% — critically low.`);
+            else if (spo2 < 95)     parts.push(`SpO₂ ${spo2}% — mildly reduced.`);
+            else                    parts.push(`SpO₂ ${spo2}% — adequate.`);
           }
           if (vitals.respiratoryRate) {
             const rr = parseFloat(vitals.respiratoryRate);
-            if (rr > 20) parts.push(`Respiratory rate of ${rr} breaths/min is elevated (tachypnoea), consistent with systemic infection.`);
-            else if (rr < 12) parts.push(`Respiratory rate of ${rr} breaths/min is below normal range.`);
-            else parts.push(`Respiratory rate of ${rr} breaths/min is normal.`);
+            if (rr > 20)            parts.push(`RR ${rr}/min — tachypnoea, consistent with infection.`);
+            else if (rr < 12)       parts.push(`RR ${rr}/min — below normal.`);
+            else                    parts.push(`RR ${rr}/min — normal.`);
           }
 
-          // Summary conclusion
-          if (severeProbability === "Very High") parts.push(`Taken together, these findings are consistent with a very high likelihood of invasive bacterial infection (8× risk). Urgent clinical review and consideration of antibiotic therapy is recommended.`);
-          else if (severeProbability === "High") parts.push(`Taken together, these findings suggest a high likelihood of serious bacterial infection (3.5× risk). Clinical review and close monitoring are recommended.`);
-          else if (severeProbability === "Moderate") parts.push(`Overall, serious bacterial infection is less likely but cannot be excluded. Clinical correlation and follow-up are advised.`);
-          else parts.push(`Combined findings support ruling out serious bacterial infection at this time.`);
+          // Conclusion
+          if (severeProbability === "Very High")     parts.push(`Urgent review — very high IBI likelihood.`);
+          else if (severeProbability === "High")     parts.push(`Clinical review recommended — high IBI likelihood.`);
+          else if (severeProbability === "Moderate") parts.push(`Monitor closely — infection cannot be excluded.`);
+          else                                        parts.push(`Low overall risk — infection unlikely.`);
 
           return parts.join(' ');
         };
