@@ -1,15 +1,15 @@
 {
-  "short_name": "AbacusDetect",
+  "short_name": "CLEO",
   "name": "Abacus Labs Diagnostic System",
   "icons": [
     {
-      "src": "/Vertical_logo_bgtransparent_1769613129480.png",
+      "src": "/favicon.png",
       "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "/Vertical_logo_bgtransparent_1769613129480.png",
+      "src": "/favicon.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
