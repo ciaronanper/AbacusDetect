@@ -930,13 +930,11 @@ export default function Workflow() {
                         </div>
                         <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-gray-400" />
                       </div>
-                      {/* Coloured bar */}
+                      {/* Coloured bar: 0-20 green (40%), 20-30 yellow (20%), 30-50 red (40%) */}
                       <div className="flex h-4 rounded-lg overflow-hidden mt-8">
-                        <div className="bg-green-500" style={{ width: "20%" }} />
-                        <div className="bg-green-400" style={{ width: "20%" }} />
-                        <div className="bg-amber-400" style={{ width: "20%" }} />
-                        <div className="bg-orange-500" style={{ width: "20%" }} />
-                        <div className="bg-red-600" style={{ width: "20%" }} />
+                        <div className="bg-green-500" style={{ width: "40%" }} />
+                        <div className="bg-yellow-400" style={{ width: "20%" }} />
+                        <div className="bg-red-500" style={{ width: "40%" }} />
                       </div>
                     </div>
                     {/* Scale labels */}
@@ -947,6 +945,21 @@ export default function Workflow() {
                       <span>30</span>
                       <span>40</span>
                       <span>50</span>
+                    </div>
+                    {/* Rule out / Rule in key */}
+                    <div className="flex gap-2 mt-3">
+                      <div
+                        className="flex-1 flex items-center justify-center py-1.5 text-white text-xs font-bold"
+                        style={{ clipPath: "polygon(0% 50%, 8% 0%, 100% 0%, 100% 100%, 8% 100%)", background: "#22c55e" }}
+                      >
+                        ← Rule out
+                      </div>
+                      <div
+                        className="flex-1 flex items-center justify-center py-1.5 text-white text-xs font-bold"
+                        style={{ clipPath: "polygon(0% 0%, 92% 0%, 100% 50%, 92% 100%, 0% 100%)", background: "#ef4444" }}
+                      >
+                        Rule in →
+                      </div>
                     </div>
                   </div>
                 ) : (
