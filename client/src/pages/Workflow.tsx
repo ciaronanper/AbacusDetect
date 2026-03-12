@@ -109,25 +109,27 @@ export default function Workflow() {
 
   // === HELPERS ===
   const generateResult = (): TestResult => {
-    const saa2 = Math.floor(Math.random() * 501); // 0-500
+    // 40% Low (0–4), 20% Moderate (5–59), 40% High (60–500)
+    const r = Math.random();
+    const saa2 =
+      r < 0.40 ? Math.floor(Math.random() * 5) :
+      r < 0.60 ? Math.floor(5 + Math.random() * 55) :
+                 Math.floor(60 + Math.random() * 441);
     let level = "";
     let interpretation = "";
 
-    if (saa2 < 10) {
-      level = "Normal";
-      interpretation = "No significant inflammation";
-    } else if (saa2 <= 50) {
-      level = "Mild";
-      interpretation = "Mild infection or inflammation";
-    } else if (saa2 <= 100) {
+    if (saa2 < 5) {
+      level = "Low";
+      interpretation = "Normal range — serious bacterial infection effectively ruled out";
+    } else if (saa2 < 60) {
       level = "Moderate";
-      interpretation = "Moderate inflammation, possible bacterial infection";
+      interpretation = "Moderate elevation — less likely but infection cannot be excluded";
     } else if (saa2 <= 200) {
       level = "High";
-      interpretation = "Significant inflammation, likely bacterial infection";
+      interpretation = "Elevated — 3.5× increased risk of serious bacterial infection";
     } else {
-      level = "Severe";
-      interpretation = "Severe infection or systematic inflammation - Sepsis Risk";
+      level = "Very High";
+      interpretation = "Markedly elevated — 8× increased risk of serious bacterial infection";
     }
 
     return { saa2, level, interpretation };
@@ -809,8 +811,8 @@ export default function Workflow() {
           severityScore >= 30 ? "High" :
           severityScore >= 10 ? "Moderate" : "Low";
         const severityBadgeColor =
-          severityScore >= 42 ? "bg-red-600" :
-          severityScore >= 30 ? "bg-orange-500" :
+          severityScore >= 42 ? "bg-red-700" :
+          severityScore >= 30 ? "bg-red-500" :
           severityScore >= 10 ? "bg-amber-400" : "bg-green-500";
         const pinLeft = `clamp(12px, calc(${(severityScore / 50) * 100}% - 12px), calc(100% - 12px))`;
 
