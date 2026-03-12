@@ -742,6 +742,37 @@ export default function Workflow() {
         const isHighRisk = severeProbability === "High";
         const isMedRisk = severeProbability === "Medium";
 
+        const startNotesRecording = async () => {
+          try {
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+              toast({ title: "Not Supported", description: "Voice recognition is not supported in this browser.", variant: "destructive" });
+              return;
+            }
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+            recognition.onresult = (event: any) => {
+              let transcript = '';
+              for (let i = 0; i < event.results.length; i++) transcript += event.results[i][0].transcript;
+              setResultNote(transcript);
+            };
+            recognition.onerror = () => setIsRecording(false);
+            recognition.onend = () => setIsRecording(false);
+            (window as any).currentRecognition = recognition;
+            recognition.start();
+            setIsRecording(true);
+          } catch {
+            toast({ title: "Error", description: "Could not start voice recognition.", variant: "destructive" });
+          }
+        };
+
+        const stopNotesRecording = () => {
+          if ((window as any).currentRecognition) (window as any).currentRecognition.stop();
+          setIsRecording(false);
+        };
+
         // Likelihood of Invasive Bacterial Infection percentage derived from SAA2
         const ibiPercentage = Math.min(99, Math.round((result.saa2 / 500) * 100));
 
@@ -857,15 +888,22 @@ export default function Workflow() {
                   )}
                 </div>
 
-                <div className="pt-2 border-t border-border">
-                  <ActionButton 
-                    fullWidth 
-                    onClick={() => setStep("cleo")}
-                    data-testid="button-cleo"
+                <div className="pt-2 border-t border-border space-y-2">
+                  <ActionButton
+                    fullWidth
+                    variant={isRecording ? "danger" : "outline"}
+                    onClick={isRecording ? stopNotesRecording : startNotesRecording}
+                    data-testid="button-record-notes"
                   >
-                    <Bot className="w-5 h-5 mr-2" />
-                    CLEO - Virtual Nurse
+                    {isRecording ? <MicOff className="w-5 h-5 mr-2" /> : <Mic className="w-5 h-5 mr-2" />}
+                    {isRecording ? "Stop Recording" : "Record Notes"}
                   </ActionButton>
+                  {resultNote && (
+                    <div className="bg-muted rounded-xl p-3 text-sm text-foreground" data-testid="text-result-note">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">Notes</span>
+                      {resultNote}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
