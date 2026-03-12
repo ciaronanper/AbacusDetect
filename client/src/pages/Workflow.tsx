@@ -827,17 +827,14 @@ export default function Workflow() {
         
         const resultPageContent = (pageIndex: number) => (
           <div className="flex flex-col h-full pb-4 relative">
-            <span className="absolute top-0 right-0 text-[10px] font-bold text-muted-foreground bg-muted px-2 py-0.5 rounded-bl-lg rounded-tr-lg z-10">
-              Result Screen {pageIndex + 1}/3
-            </span>
             <div className="bg-muted/60 border border-border rounded-xl px-3 py-2 mb-2 flex items-center justify-between text-xs text-muted-foreground" data-testid="card-patient-info-header">
               <div>
-                <span className="font-bold text-foreground block">{MOCK_PATIENT}</span>
-                <span className="uppercase tracking-wide">Patient ID</span>
+                <span className="uppercase tracking-wide block">Patient ID</span>
+                <span className="font-bold text-foreground">{MOCK_PATIENT}</span>
               </div>
               <div className="text-center">
-                <span className="font-bold text-foreground block">{confirmedNurseId}</span>
-                <span className="uppercase tracking-wide">Nurse</span>
+                <span className="uppercase tracking-wide block">Nurse</span>
+                <span className="font-bold text-foreground">{confirmedNurseId}</span>
               </div>
               {resultDateTime && (
                 <div className="text-right">
@@ -848,19 +845,8 @@ export default function Workflow() {
             </div>
             <div className="flex-1 space-y-3 overflow-y-auto">
               <div className="space-y-3">
-                {/* Top card — differs per screen */}
-                {pageIndex === 0 ? (
-                  <div className={cn(
-                    "p-4 rounded-xl border-2 text-center",
-                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
-                  )}>
-                    <span className="text-xs font-bold uppercase opacity-60 block">Probability of Severe Infection</span>
-                    <p className={cn(
-                      "text-2xl font-bold mt-1",
-                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
-                    )} data-testid="text-severe-probability">{severeProbability}</p>
-                  </div>
-                ) : (
+                {/* Top card — screen 2 (index 1) shows Likelihood %; screens 1 & 3 show Probability */}
+                {pageIndex === 1 ? (
                   <div className={cn(
                     "p-4 rounded-xl border-2 text-center",
                     isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
@@ -871,10 +857,21 @@ export default function Workflow() {
                       isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
                     )} data-testid={`text-ibi-percentage-${pageIndex}`}>{ibiPercentage}<span className="text-lg font-normal">%</span></p>
                   </div>
+                ) : (
+                  <div className={cn(
+                    "p-4 rounded-xl border-2 text-center",
+                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
+                  )}>
+                    <span className="text-xs font-bold uppercase opacity-60 block">Probability of Severe Infection</span>
+                    <p className={cn(
+                      "text-2xl font-bold mt-1",
+                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
+                    )} data-testid={`text-severe-probability-${pageIndex}`}>{severeProbability}</p>
+                  </div>
                 )}
 
-                {/* Second card — SAA2 raw (screens 1 & 2) or threshold (screen 3) */}
-                {pageIndex < 2 ? (
+                {/* Second card — screen 1 (index 0) shows raw SAA2; screens 2 & 3 show threshold */}
+                {pageIndex === 0 ? (
                   <div className={cn(
                     "p-4 rounded-xl border-2 text-center",
                     isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
@@ -883,7 +880,7 @@ export default function Workflow() {
                     <p className={cn(
                       "text-2xl font-bold mt-1",
                       isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
-                    )} data-testid={`text-saa2-level-${pageIndex}`}>{result.saa2} <span className="text-sm font-normal">mg/L</span></p>
+                    )} data-testid="text-saa2-level">{result.saa2} <span className="text-sm font-normal">mg/L</span></p>
                   </div>
                 ) : (
                   <div className={cn(
@@ -894,7 +891,7 @@ export default function Workflow() {
                     <p className={cn(
                       "text-2xl font-bold mt-1",
                       isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
-                    )} data-testid="text-saa2-threshold">{saa2Threshold}</p>
+                    )} data-testid={`text-saa2-threshold-${pageIndex}`}>{saa2Threshold}</p>
                   </div>
                 )}
 
