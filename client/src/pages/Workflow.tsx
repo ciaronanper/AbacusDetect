@@ -879,75 +879,42 @@ export default function Workflow() {
             </div>
             <div className="flex-1 space-y-3 overflow-y-auto">
               <div className="space-y-3">
-                {/* Top card — screen 3 (index 2) shows Likelihood %; screens 1 & 2 show Probability */}
-                {pageIndex === 2 ? (
-                  <div className={cn(
-                    "p-4 rounded-xl border-2 text-center",
-                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
-                  )}>
+                {/* TOP CARD
+                    Page 1: Probability of SBI
+                    Page 2: Likelihood of IBI %
+                    Page 3: SAA2 Level (threshold) */}
+                {pageIndex === 1 ? (
+                  <div className={cn("p-4 rounded-xl border-2 text-center", isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100")}>
                     <span className="text-xs font-bold uppercase opacity-60 block">Likelihood of Invasive Bacterial Infection</span>
-                    <p className={cn(
-                      "text-3xl font-bold mt-1",
-                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
-                    )} data-testid={`text-ibi-percentage-${pageIndex}`}>{ibiPercentage}<span className="text-lg font-normal">%</span></p>
+                    <p className={cn("text-3xl font-bold mt-1", isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700")} data-testid={`text-ibi-percentage-${pageIndex}`}>{ibiPercentage}<span className="text-lg font-normal">%</span></p>
+                  </div>
+                ) : pageIndex === 2 ? (
+                  <div className={cn("p-4 rounded-xl border-2 text-center", isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100")}>
+                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
+                    <p className={cn("text-2xl font-bold mt-1", isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700")} data-testid={`text-saa2-threshold-${pageIndex}`}>{saa2Threshold}</p>
                   </div>
                 ) : (
-                  <div className={cn(
-                    "p-4 rounded-xl border-2 text-center",
-                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100"
-                  )}>
+                  <div className={cn("p-4 rounded-xl border-2 text-center", isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100")}>
                     <span className="text-xs font-bold uppercase opacity-60 block">Probability of Severe Infection</span>
-                    <p className={cn(
-                      "text-2xl font-bold mt-1",
-                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700"
-                    )} data-testid={`text-severe-probability-${pageIndex}`}>{severeProbability}</p>
+                    <p className={cn("text-2xl font-bold mt-1", isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700")} data-testid={`text-severe-probability-${pageIndex}`}>{severeProbability}</p>
                   </div>
                 )}
 
-                {/* Second card — screen 1 (index 0) shows raw SAA2; screens 2 & 3 show threshold */}
-                {pageIndex === 0 ? (
-                  <div className={cn(
-                    "p-4 rounded-xl border-2 text-center",
-                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
-                  )}>
-                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
-                    <p className={cn(
-                      "text-2xl font-bold mt-1",
-                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
-                    )} data-testid="text-saa2-level">{result.saa2} <span className="text-sm font-normal">mg/L</span></p>
-                  </div>
-                ) : (
-                  <div className={cn(
-                    "p-4 rounded-xl border-2 text-center",
-                    isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100"
-                  )}>
-                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
-                    <p className={cn(
-                      "text-2xl font-bold mt-1",
-                      isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700"
-                    )} data-testid={`text-saa2-threshold-${pageIndex}`}>{saa2Threshold}</p>
-                  </div>
-                )}
-
-                {/* Screen 1: severity gauge; screens 2 & 3: clinical reasoning */}
-                {pageIndex === 0 ? (
-                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge">
+                {/* MIDDLE CARD
+                    Page 1: raw SAA2
+                    Page 2: SAA2 threshold
+                    Page 3: Severity gauge */}
+                {pageIndex === 2 ? (
+                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge-p3">
                     <div className="flex items-center justify-between mb-4">
                       <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Illness Severity Score</span>
-                      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full text-white", severityBadgeColor)}>
-                        {severityLabel}
-                      </span>
+                      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full text-white", severityBadgeColor)}>{severityLabel}</span>
                     </div>
-                    {/* Pin + bar */}
                     <div className="relative px-1">
-                      {/* Pin circle */}
                       <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
-                        <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[10px] font-bold shadow-md text-gray-800">
-                          {severityScore}
-                        </div>
+                        <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[10px] font-bold shadow-md text-gray-800">{severityScore}</div>
                         <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-gray-400" />
                       </div>
-                      {/* Coloured bar: 0-20 green (40%), 20-30 yellow (20%), 30-50 red (40%) */}
                       <div className="mt-8 rounded-lg border border-gray-300 overflow-hidden">
                         <div className="flex h-4">
                           <div className="bg-green-500" style={{ width: "40%" }} />
@@ -956,38 +923,62 @@ export default function Workflow() {
                         </div>
                       </div>
                     </div>
-                    {/* Scale labels */}
                     <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
-                      <span>0</span>
-                      <span>10</span>
-                      <span>20</span>
-                      <span>30</span>
-                      <span>40</span>
-                      <span>50</span>
+                      <span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span>
                     </div>
-                    {/* Rule out / Rule in key — widths match gauge bands: green 40%, orange gap 20%, red 40% */}
                     <div className="flex mt-3">
-                      <div
-                        className="flex items-center justify-center text-white text-xs font-bold"
-                        style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}
-                      >
-                        ← Rule out
-                      </div>
+                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}>← Rule out</div>
                       <div style={{ width: "20%" }} />
-                      <div
-                        className="flex items-center justify-center text-white text-xs font-bold"
-                        style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}
-                      >
-                        Rule in →
-                      </div>
+                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
                     </div>
                   </div>
                 ) : (
+                  <div className={cn("p-4 rounded-xl border-2 text-center", isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100")}>
+                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
+                    <p className={cn("text-2xl font-bold mt-1", isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700")} data-testid={pageIndex === 0 ? "text-saa2-level" : `text-saa2-threshold-${pageIndex}`}>
+                      {pageIndex === 0 ? <>{result.saa2} <span className="text-sm font-normal">mg/L</span></> : saa2Threshold}
+                    </p>
+                  </div>
+                )}
+
+                {/* BOTTOM CARD
+                    Page 1: Severity gauge
+                    Page 2: Clinical Reasoning
+                    Page 3: (nothing) */}
+                {pageIndex === 0 ? (
+                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Illness Severity Score</span>
+                      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full text-white", severityBadgeColor)}>{severityLabel}</span>
+                    </div>
+                    <div className="relative px-1">
+                      <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
+                        <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[10px] font-bold shadow-md text-gray-800">{severityScore}</div>
+                        <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-gray-400" />
+                      </div>
+                      <div className="mt-8 rounded-lg border border-gray-300 overflow-hidden">
+                        <div className="flex h-4">
+                          <div className="bg-green-500" style={{ width: "40%" }} />
+                          <div className="bg-yellow-400" style={{ width: "20%" }} />
+                          <div className="bg-red-500" style={{ width: "40%" }} />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
+                      <span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span>
+                    </div>
+                    <div className="flex mt-3">
+                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}>← Rule out</div>
+                      <div style={{ width: "20%" }} />
+                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
+                    </div>
+                  </div>
+                ) : pageIndex === 1 ? (
                   <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid={`card-reasoning-${pageIndex}`}>
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Clinical Reasoning</span>
                     <p className="text-sm text-foreground leading-relaxed">{reasoning}</p>
                   </div>
-                )}
+                ) : null}
 
                 {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
                   <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid={`card-vitals-${pageIndex}`}>
