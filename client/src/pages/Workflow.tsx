@@ -728,34 +728,34 @@ export default function Workflow() {
       case "results":
         if (!result) return null;
         
-        // Calculate probability based on SAA2
-        let severeProbability: "High" | "Medium" | "Low";
-        
-        if (result.saa2 > 200) {
-          severeProbability = "High";
-        } else if (result.saa2 > 100) {
-          severeProbability = "Medium";
-        } else {
-          severeProbability = "Low";
-        }
-        
-        const isHighRisk = severeProbability === "High";
-        const isMedRisk = severeProbability === "Medium";
+        // Clinical SAA2 thresholds:
+        // <5 mg/L  → Low      (rule out serious infection)
+        // 5–60     → Moderate (less likely, non-serious mean = 41 mg/L)
+        // 60–200   → High     (3.5× more likely to be serious)
+        // >200     → Very High (8× more likely; serious infection mean = 256 mg/L)
+        let severeProbability: "Very High" | "High" | "Moderate" | "Low";
+        if (result.saa2 > 200)      severeProbability = "Very High";
+        else if (result.saa2 >= 60) severeProbability = "High";
+        else if (result.saa2 >= 5)  severeProbability = "Moderate";
+        else                         severeProbability = "Low";
+
+        const isHighRisk = severeProbability === "High" || severeProbability === "Very High";
+        const isMedRisk  = severeProbability === "Moderate";
 
         // Generate clinical reasoning text
         const buildReasoning = (): string => {
           const parts: string[] = [];
           const saa2Val = result.saa2;
 
-          // SAA2 contribution
+          // SAA2 contribution — based on validated clinical thresholds
           if (saa2Val > 200) {
-            parts.push(`SAA2 of ${saa2Val} mg/L is markedly elevated, indicating severe systemic inflammation or infection.`);
-          } else if (saa2Val > 100) {
-            parts.push(`SAA2 of ${saa2Val} mg/L is moderately elevated, suggesting active inflammation or bacterial infection.`);
-          } else if (saa2Val >= 10) {
-            parts.push(`SAA2 of ${saa2Val} mg/L is mildly elevated, which may reflect early-stage or localised inflammation.`);
+            parts.push(`SAA2 of ${saa2Val} mg/L is markedly elevated (>200 mg/L). This is associated with an 8× increased likelihood of serious bacterial infection; the mean SAA2 in serious infection is 256 mg/L.`);
+          } else if (saa2Val >= 60) {
+            parts.push(`SAA2 of ${saa2Val} mg/L is elevated (60–200 mg/L), associated with a 3.5× increased likelihood of serious bacterial infection.`);
+          } else if (saa2Val >= 5) {
+            parts.push(`SAA2 of ${saa2Val} mg/L is in the moderate range (5–60 mg/L). Serious bacterial infection is less likely but cannot be excluded; the mean SAA2 in non-serious infection is 41 mg/L.`);
           } else {
-            parts.push(`SAA2 of ${saa2Val} mg/L is within normal range, making systemic bacterial infection less likely.`);
+            parts.push(`SAA2 of ${saa2Val} mg/L is within normal range (<5 mg/L), which effectively rules out serious bacterial infection.`);
           }
 
           // Vitals contribution
@@ -778,31 +778,37 @@ export default function Workflow() {
             else parts.push(`Respiratory rate of ${rr} breaths/min is normal.`);
           }
 
-          // Visual signs
-          if (isHighRisk) parts.push(`Taken together, these findings are consistent with a high likelihood of invasive bacterial infection and potential sepsis. Urgent clinical review is recommended.`);
-          else if (isMedRisk) parts.push(`Overall, findings suggest a moderate likelihood of bacterial infection. Clinical correlation and close monitoring are advised.`);
-          else parts.push(`Combined findings suggest a low likelihood of systemic bacterial infection at this time.`);
+          // Summary conclusion
+          if (severeProbability === "Very High") parts.push(`Taken together, these findings are consistent with a very high likelihood of invasive bacterial infection (8× risk). Urgent clinical review and consideration of antibiotic therapy is recommended.`);
+          else if (severeProbability === "High") parts.push(`Taken together, these findings suggest a high likelihood of serious bacterial infection (3.5× risk). Clinical review and close monitoring are recommended.`);
+          else if (severeProbability === "Moderate") parts.push(`Overall, serious bacterial infection is less likely but cannot be excluded. Clinical correlation and follow-up are advised.`);
+          else parts.push(`Combined findings support ruling out serious bacterial infection at this time.`);
 
           return parts.join(' ');
         };
 
         const reasoning = buildReasoning();
 
-        // Severity score: banded to stay consistent with SAA2/probability risk level
-        // High (SAA2>200) → 40-50, Medium (100-200) → 20-39, Low (0-100) → 0-19
+        // Severity score mapped to 0–50 gauge using clinical bands:
+        // SAA2 <5   → 0–10  (green, rule out)
+        // SAA2 5–60 → 10–20 (green, moderate)
+        // SAA2 60–200 → 20–38 (yellow+red, high)
+        // SAA2 >200   → 38–50 (deep red, very high)
         const severityScore = (() => {
-          if (result.saa2 > 200) return 40 + Math.round(((result.saa2 - 201) / 299) * 10);
-          if (result.saa2 > 100) return 20 + Math.round(((result.saa2 - 101) / 99) * 19);
-          return Math.round((result.saa2 / 100) * 19);
+          if (result.saa2 > 200) return 38 + Math.round(((Math.min(result.saa2, 500) - 201) / 299) * 12);
+          if (result.saa2 >= 60) return 20 + Math.round(((result.saa2 - 60) / 140) * 18);
+          if (result.saa2 >= 5)  return 10 + Math.round(((result.saa2 - 5) / 55) * 10);
+          return Math.round((result.saa2 / 5) * 10);
         })();
+        // Labels aligned to clinical SAA2 bands (not evenly spaced on gauge)
         const severityLabel =
-          severityScore >= 40 ? "Very High" :
-          severityScore >= 30 ? "High" :
-          severityScore >= 20 ? "Moderate" : "Low";
+          severityScore >= 38 ? "Very High" :
+          severityScore >= 20 ? "High" :
+          severityScore >= 10 ? "Moderate" : "Low";
         const severityBadgeColor =
-          severityScore >= 40 ? "bg-red-500" :
-          severityScore >= 30 ? "bg-orange-500" :
-          severityScore >= 20 ? "bg-amber-400" : "bg-green-500";
+          severityScore >= 38 ? "bg-red-600" :
+          severityScore >= 20 ? "bg-orange-500" :
+          severityScore >= 10 ? "bg-amber-400" : "bg-green-500";
         const pinLeft = `clamp(12px, calc(${(severityScore / 50) * 100}% - 12px), calc(100% - 12px))`;
 
         const startNotesRecording = async () => {
@@ -836,11 +842,16 @@ export default function Workflow() {
           setIsRecording(false);
         };
 
-        // Likelihood of Invasive Bacterial Infection percentage derived from SAA2
-        const ibiPercentage = Math.min(99, Math.round((result.saa2 / 500) * 100));
+        // IBI likelihood %: piecewise mapped from clinical SAA2 bands
+        const ibiPercentage = (() => {
+          if (result.saa2 > 200) return 70 + Math.round(((Math.min(result.saa2, 500) - 201) / 299) * 29);
+          if (result.saa2 >= 60) return 30 + Math.round(((result.saa2 - 60) / 140) * 40);
+          if (result.saa2 >= 5)  return 5  + Math.round(((result.saa2 - 5)  / 55)  * 25);
+          return Math.round((result.saa2 / 5) * 5);
+        })();
 
-        // SAA2 threshold label for screen 3
-        const saa2Threshold = result.saa2 > 200 ? "> 200 mg/L" : result.saa2 < 10 ? "< 10 mg/L" : `${result.saa2} mg/L`;
+        // SAA2 threshold label for screen 3 — show raw value in the moderate band, labels at extremes
+        const saa2Threshold = result.saa2 > 200 ? "> 200 mg/L" : result.saa2 < 5 ? "< 5 mg/L" : `${result.saa2} mg/L`;
         
         const resultPageContent = (pageIndex: number) => (
           <div className="flex flex-col h-full pb-4 relative">
