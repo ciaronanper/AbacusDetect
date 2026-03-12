@@ -789,25 +789,28 @@ export default function Workflow() {
 
         const reasoning = buildReasoning();
 
-        // Severity score mapped to 0–50 gauge using clinical bands:
-        // SAA2 <5   → 0–10  (green, rule out)
-        // SAA2 5–60 → 10–20 (green, moderate)
-        // SAA2 60–200 → 20–38 (yellow+red, high)
-        // SAA2 >200   → 38–50 (deep red, very high)
+        // Severity score + IBI% derived from the SAME band as severeProbability
+        // so all three metrics stay consistent with each other.
+        //
+        // Band → gauge (0-50) → IBI %
+        // Low      → 0-10   → 1-10%
+        // Moderate → 10-20  → 10-35%
+        // High     → 25-38  → 55-82%   (big jump reflects 3.5× clinical LR)
+        // Very High→ 38-50  → 82-99%   (8× clinical LR)
         const severityScore = (() => {
-          if (result.saa2 > 200) return 38 + Math.round(((Math.min(result.saa2, 500) - 201) / 299) * 12);
-          if (result.saa2 >= 60) return 20 + Math.round(((result.saa2 - 60) / 140) * 18);
-          if (result.saa2 >= 5)  return 10 + Math.round(((result.saa2 - 5) / 55) * 10);
-          return Math.round((result.saa2 / 5) * 10);
+          const s = result.saa2;
+          if (severeProbability === "Very High") return 38 + Math.round(((Math.min(s, 500) - 201) / 299) * 12);
+          if (severeProbability === "High")      return 25 + Math.round(((s - 60) / 140) * 13);
+          if (severeProbability === "Moderate")  return 10 + Math.round(((s - 5)  / 55)  * 10);
+          return Math.round((s / 5) * 10);
         })();
-        // Labels aligned to clinical SAA2 bands (not evenly spaced on gauge)
         const severityLabel =
           severityScore >= 38 ? "Very High" :
-          severityScore >= 20 ? "High" :
+          severityScore >= 25 ? "High" :
           severityScore >= 10 ? "Moderate" : "Low";
         const severityBadgeColor =
           severityScore >= 38 ? "bg-red-600" :
-          severityScore >= 20 ? "bg-orange-500" :
+          severityScore >= 25 ? "bg-orange-500" :
           severityScore >= 10 ? "bg-amber-400" : "bg-green-500";
         const pinLeft = `clamp(12px, calc(${(severityScore / 50) * 100}% - 12px), calc(100% - 12px))`;
 
@@ -842,12 +845,13 @@ export default function Workflow() {
           setIsRecording(false);
         };
 
-        // IBI likelihood %: piecewise mapped from clinical SAA2 bands
+        // IBI likelihood %: same band as severeProbability — always consistent
         const ibiPercentage = (() => {
-          if (result.saa2 > 200) return 70 + Math.round(((Math.min(result.saa2, 500) - 201) / 299) * 29);
-          if (result.saa2 >= 60) return 30 + Math.round(((result.saa2 - 60) / 140) * 40);
-          if (result.saa2 >= 5)  return 5  + Math.round(((result.saa2 - 5)  / 55)  * 25);
-          return Math.round((result.saa2 / 5) * 5);
+          const s = result.saa2;
+          if (severeProbability === "Very High") return 82 + Math.round(((Math.min(s, 500) - 201) / 299) * 17);
+          if (severeProbability === "High")      return 55 + Math.round(((s - 60)  / 140) * 27);
+          if (severeProbability === "Moderate")  return 10 + Math.round(((s - 5)   / 55)  * 25);
+          return 1 + Math.round((s / 5) * 9);
         })();
 
         // SAA2 threshold label for screen 3 — show raw value in the moderate band, labels at extremes
