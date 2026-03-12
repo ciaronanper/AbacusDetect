@@ -801,14 +801,16 @@ export default function Workflow() {
           if (severeProbability === "Moderate")  return 10 + Math.round(((s - 5)  / 55)  * 18);
           return Math.round((s / 5) * 10);
         })();
+        // Labels match the gauge colour zones exactly:
+        // green 0-20 → Low, yellow 20-30 → Moderate, red 30-42 → High, deep red 42-50 → Very High
         const severityLabel =
           severityScore >= 42 ? "Very High" :
           severityScore >= 30 ? "High" :
-          severityScore >= 10 ? "Moderate" : "Low";
+          severityScore >= 20 ? "Moderate" : "Low";
         const severityBadgeColor =
           severityScore >= 42 ? "bg-red-700" :
           severityScore >= 30 ? "bg-red-500" :
-          severityScore >= 10 ? "bg-amber-400" : "bg-green-500";
+          severityScore >= 20 ? "bg-amber-400" : "bg-green-500";
         const pinLeft = `clamp(12px, calc(${(severityScore / 50) * 100}% - 12px), calc(100% - 12px))`;
 
         const startNotesRecording = async () => {
