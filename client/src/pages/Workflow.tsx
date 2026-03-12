@@ -787,15 +787,15 @@ export default function Workflow() {
         const reasoning = buildReasoning();
 
         // Severity score: 0–10 scale mapped directly from SAA2
-        // SAA2  0–10  → score 0–4   (green, rule out)
-        // SAA2 10–50  → score 5–7   (yellow, moderate) — linear with step at 10
-        // SAA2 50–∞   → score 7–10  (red, rule in) — exponential; converges ~1000 mg/L
+        // SAA2  0–10  → score 0–4  (green,  rule out) — linear
+        // SAA2 10–50  → score 4–6  (yellow, moderate) — linear, continuous at boundaries
+        // SAA2 50–∞   → score 6–10 (red,    rule in)  — exponential; ~9.5 at 300, ~10 at 1000
         const severityScore = (() => {
           const s = result.saa2;
           if (s <= 10) return Math.round((s / 10) * 4 * 10) / 10;
-          if (s <= 50) return Math.round((5 + ((s - 10) / 40) * 2) * 10) / 10;
-          const k = 0.00716; // tuned so SAA2=300 → ~9.5, SAA2=1000 → ~10
-          return Math.round(Math.min(10, 7 + 3 * (1 - Math.exp(-k * (s - 50)))) * 10) / 10;
+          if (s <= 50) return Math.round((4 + ((s - 10) / 40) * 2) * 10) / 10;
+          const k = 0.00716;
+          return Math.round(Math.min(10, 6 + 4 * (1 - Math.exp(-k * (s - 50)))) * 10) / 10;
         })();
         // Labels/colours match gauge zones: green 0–4 = Low, yellow 4–6 = Moderate, red 6–10 = High
         const severityLabel =
