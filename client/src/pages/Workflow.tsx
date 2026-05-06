@@ -717,15 +717,16 @@ export default function Workflow() {
           result.saa2 <= 300 ? { label: "High",       text: "High probability of SBI",       bg: "bg-orange-50", border: "border-orange-200", textColor: "text-orange-700", badgeColor: "bg-orange-500" } :
                                { label: "Very High",  text: "Very high probability of SBI",  bg: "bg-red-50",    border: "border-red-200",    textColor: "text-red-700",    badgeColor: "bg-red-500"    };
 
-        // Severity score: SAA2 0–10→0–4, 10–50→4–6, 50+→6–10 exponential
-        const severityScore = (() => {
+        // 5-band gauge pin: each band occupies 20% of the bar width
+        const gaugePinPct = (() => {
           const s = result.saa2;
-          if (s <= 10) return Math.round((s / 10) * 4 * 10) / 10;
-          if (s <= 50) return Math.round((4 + ((s - 10) / 40) * 2) * 10) / 10;
-          const k = 0.00716;
-          return Math.round(Math.min(10, 6 + 4 * (1 - Math.exp(-k * (s - 50)))) * 10) / 10;
+          if (s < 10)   return (s / 10) * 20;
+          if (s < 50)   return 20 + ((s - 10) / 40) * 20;
+          if (s <= 200) return 40 + ((s - 50) / 150) * 20;
+          if (s <= 300) return 60 + ((s - 200) / 100) * 20;
+          return 80 + Math.min((s - 300) / 300, 1) * 20;
         })();
-        const pinLeft = `clamp(12px, calc(${(severityScore / 10) * 100}% - 12px), calc(100% - 12px))`;
+        const pinLeft = `clamp(12px, calc(${gaugePinPct}% - 12px), calc(100% - 12px))`;
 
         const startNotesRecording = async () => {
           try {
@@ -782,9 +783,8 @@ export default function Workflow() {
 
               {/* Probability card */}
               <div className={cn("p-4 rounded-xl border-2 text-center", band.bg, band.border)} data-testid="card-probability">
-                <span className="text-xs font-bold uppercase opacity-60 block mb-1">Probability of SBI</span>
-                <p className={cn("text-2xl font-bold", band.textColor)} data-testid="text-sbi-probability">{band.text}</p>
-                <span className={cn("inline-block mt-2 text-xs font-bold px-3 py-0.5 rounded-full text-white", band.badgeColor)}>{band.label}</span>
+                <span className="text-xs font-bold uppercase opacity-60 block mb-2">Probability of SBI</span>
+                <span className={cn("inline-block text-sm font-bold px-4 py-1 rounded-full text-white", band.badgeColor)} data-testid="text-sbi-probability">{band.label}</span>
               </div>
 
               {/* SAA2 level card */}
@@ -795,32 +795,44 @@ export default function Workflow() {
                 </p>
               </div>
 
-              {/* Severity gauge */}
+              {/* SAA2 gauge — 5 equal bands */}
               <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Illness Severity Score</span>
-                  <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full text-white", band.badgeColor)}>{severityScore} / 10</span>
-                </div>
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-4">SAA2 Range</span>
                 <div className="relative px-1">
+                  {/* Pin */}
                   <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
-                    <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[10px] font-bold shadow-md text-gray-800">{severityScore}</div>
+                    <div className="w-7 h-7 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[9px] font-bold shadow-md text-gray-800 leading-none text-center">{result.saa2}</div>
                     <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-gray-400" />
                   </div>
-                  <div className="mt-8 rounded-lg border border-gray-300 overflow-hidden">
-                    <div className="flex h-4">
-                      <div className="bg-green-500" style={{ width: "40%" }} />
+                  {/* 5-colour bar */}
+                  <div className="mt-9 rounded-lg border border-gray-200 overflow-hidden">
+                    <div className="flex h-5">
+                      <div className="bg-green-800" style={{ width: "20%" }} />
+                      <div className="bg-green-400" style={{ width: "20%" }} />
                       <div className="bg-yellow-400" style={{ width: "20%" }} />
-                      <div className="bg-red-500" style={{ width: "40%" }} />
+                      <div className="bg-orange-400" style={{ width: "20%" }} />
+                      <div className="bg-red-500"    style={{ width: "20%" }} />
                     </div>
                   </div>
                 </div>
-                <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
-                  <span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span>
+                {/* Boundary labels */}
+                <div className="flex justify-between text-[9px] text-muted-foreground mt-1 px-0.5">
+                  <span>0</span><span>10</span><span>50</span><span>200</span><span>300</span><span>600+</span>
                 </div>
-                <div className="flex mt-3">
-                  <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}>← Rule out</div>
-                  <div style={{ width: "20%" }} />
-                  <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
+                {/* Band labels */}
+                <div className="flex mt-2">
+                  {[
+                    { label: "Very Low", color: "bg-green-800" },
+                    { label: "Low",      color: "bg-green-400" },
+                    { label: "Moderate", color: "bg-yellow-400" },
+                    { label: "High",     color: "bg-orange-400" },
+                    { label: "Very High",color: "bg-red-500" },
+                  ].map(({ label, color }) => (
+                    <div key={label} className="flex-1 flex flex-col items-center gap-0.5">
+                      <div className={cn("w-2 h-2 rounded-full", color)} />
+                      <span className="text-[8px] text-muted-foreground text-center leading-tight">{label}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
