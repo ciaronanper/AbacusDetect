@@ -95,7 +95,6 @@ export default function Workflow() {
   const [nurseIdInput, setNurseIdInput] = useState("");
   const [confirmedNurseId, setConfirmedNurseId] = useState("");
   const [nurseAuthMethod, setNurseAuthMethod] = useState<"scan" | "input">("scan");
-  const [resultNote, setResultNote] = useState("");
   const [resultDateTime, setResultDateTime] = useState<Date | null>(null);
   const [vitals, setVitals] = useState<Vitals>({ temperature: "", spO2: "", respiratoryRate: "" });
   const [cleoTranscript, setCleoTranscript] = useState("");
@@ -163,7 +162,6 @@ export default function Workflow() {
         const newResult = generateResult();
         setResult(newResult);
         setResultDateTime(new Date());
-        setResultNote("");
         
         // Optimistically save result
         createResult.mutate({
@@ -728,37 +726,6 @@ export default function Workflow() {
         })();
         const pinLeft = `clamp(12px, calc(${gaugePinPct}% - 12px), calc(100% - 12px))`;
 
-        const startNotesRecording = async () => {
-          try {
-            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-            if (!SpeechRecognition) {
-              toast({ title: "Not Supported", description: "Voice recognition is not supported in this browser.", variant: "destructive" });
-              return;
-            }
-            const recognition = new SpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-            recognition.onresult = (event: any) => {
-              let transcript = '';
-              for (let i = 0; i < event.results.length; i++) transcript += event.results[i][0].transcript;
-              setResultNote(transcript);
-            };
-            recognition.onerror = () => setIsRecording(false);
-            recognition.onend = () => setIsRecording(false);
-            (window as any).currentRecognition = recognition;
-            recognition.start();
-            setIsRecording(true);
-          } catch {
-            toast({ title: "Error", description: "Could not start voice recognition.", variant: "destructive" });
-          }
-        };
-
-        const stopNotesRecording = () => {
-          if ((window as any).currentRecognition) (window as any).currentRecognition.stop();
-          setIsRecording(false);
-        };
-
         return (
           <div className="flex flex-col h-full max-w-sm mx-auto">
             <div className="flex-1 overflow-y-auto pb-4 space-y-3">
@@ -799,10 +766,9 @@ export default function Workflow() {
               <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge">
                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-4">SAA2 Range</span>
                 <div className="relative px-1">
-                  {/* Pin */}
+                  {/* Pin — arrow only */}
                   <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
-                    <div className="w-7 h-7 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[9px] font-bold shadow-md text-gray-800 leading-none text-center">{result.saa2}</div>
-                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-gray-400" />
+                    <div className="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[10px] border-t-gray-600" />
                   </div>
                   {/* 5-colour bar */}
                   <div className="mt-9 rounded-lg border border-gray-200 overflow-hidden">
@@ -816,7 +782,7 @@ export default function Workflow() {
                   </div>
                 </div>
                 {/* Boundary labels */}
-                <div className="flex justify-between text-[9px] text-muted-foreground mt-1 px-0.5">
+                <div className="flex justify-between text-xs text-muted-foreground mt-1 px-0.5">
                   <span>0</span><span>10</span><span>50</span><span>200</span><span>300</span><span>600+</span>
                 </div>
                 {/* Band labels */}
@@ -828,9 +794,9 @@ export default function Workflow() {
                     { label: "High",     color: "bg-orange-400" },
                     { label: "Very High",color: "bg-red-500" },
                   ].map(({ label, color }) => (
-                    <div key={label} className="flex-1 flex flex-col items-center gap-0.5">
-                      <div className={cn("w-2 h-2 rounded-full", color)} />
-                      <span className="text-[8px] text-muted-foreground text-center leading-tight">{label}</span>
+                    <div key={label} className="flex-1 flex flex-col items-center gap-1">
+                      <div className={cn("w-2.5 h-2.5 rounded-full", color)} />
+                      <span className="text-[11px] font-medium text-muted-foreground text-center leading-tight">{label}</span>
                     </div>
                   ))}
                 </div>
@@ -865,25 +831,6 @@ export default function Workflow() {
                   </div>
                 </div>
               )}
-
-              {/* Notes */}
-              <div className="pt-1 border-t border-border space-y-2">
-                <ActionButton
-                  fullWidth
-                  variant={isRecording ? "danger" : "outline"}
-                  onClick={isRecording ? stopNotesRecording : startNotesRecording}
-                  data-testid="button-record-notes"
-                >
-                  {isRecording ? <MicOff className="w-5 h-5 mr-2" /> : <Mic className="w-5 h-5 mr-2" />}
-                  {isRecording ? "Stop Recording" : "Record Notes"}
-                </ActionButton>
-                {resultNote && (
-                  <div className="bg-muted rounded-xl p-3 text-sm text-foreground" data-testid="text-result-note">
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">Notes</span>
-                    {resultNote}
-                  </div>
-                )}
-              </div>
 
               <ActionButton fullWidth variant="outline" onClick={() => setStep("uploading")} data-testid="button-upload-ehr">
                 Upload Data to Health Record
