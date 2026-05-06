@@ -767,7 +767,7 @@ export default function Workflow() {
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">SAA2 Range</span>
                   <span className={cn("text-xs font-bold px-2 py-0.5 rounded text-white", band.badgeColor)}>
-                    {result.saa2 < 10 ? "Zone 5 — Very Low" : result.saa2 < 50 ? "Zone 4 — Low" : result.saa2 <= 200 ? "Zone 3 — Moderate" : result.saa2 <= 300 ? "Zone 2 — High" : "Zone 1 — Very High"}
+                    {result.saa2 < 10 ? "Zone 5" : result.saa2 < 50 ? "Zone 4" : result.saa2 <= 200 ? "Zone 3" : result.saa2 <= 300 ? "Zone 2" : "Zone 1"}
                   </span>
                 </div>
                 <div className="relative px-1">
