@@ -764,11 +764,16 @@ export default function Workflow() {
 
               {/* SAA2 gauge — 5 equal bands */}
               <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge">
-                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-4">SAA2 Range</span>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">SAA2 Range</span>
+                  <span className={cn("text-xs font-bold px-2 py-0.5 rounded text-white", band.badgeColor)}>
+                    {result.saa2 < 10 ? "Zone 5 — Very Low" : result.saa2 < 50 ? "Zone 4 — Low" : result.saa2 <= 200 ? "Zone 3 — Moderate" : result.saa2 <= 300 ? "Zone 2 — High" : "Zone 1 — Very High"}
+                  </span>
+                </div>
                 <div className="relative px-1">
                   {/* Pin — arrow only */}
                   <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
-                    <div className="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-t-[10px] border-t-gray-600" />
+                    <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[14px] border-t-gray-600" />
                   </div>
                   {/* 5-colour bar */}
                   <div className="mt-9 rounded-lg border border-gray-200 overflow-hidden">
