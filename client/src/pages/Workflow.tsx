@@ -785,20 +785,14 @@ export default function Workflow() {
                 <div className="flex justify-between text-xs text-muted-foreground mt-1 px-0.5">
                   <span>0</span><span>10</span><span>50</span><span>200</span><span>300</span><span>600+</span>
                 </div>
-                {/* Band labels */}
-                <div className="flex mt-2">
-                  {[
-                    { label: "Very Low", color: "bg-green-800" },
-                    { label: "Low",      color: "bg-green-400" },
-                    { label: "Moderate", color: "bg-yellow-400" },
-                    { label: "High",     color: "bg-orange-400" },
-                    { label: "Very High",color: "bg-red-500" },
-                  ].map(({ label, color }) => (
-                    <div key={label} className="flex-1 flex flex-col items-center gap-1">
-                      <div className={cn("w-2.5 h-2.5 rounded-full", color)} />
-                      <span className="text-[11px] font-medium text-muted-foreground text-center leading-tight">{label}</span>
-                    </div>
-                  ))}
+                {/* Severity triangle — narrow at low end, wide at high end */}
+                <div className="mt-2 w-full" style={{ height: "36px" }}>
+                  <div style={{
+                    width: "100%",
+                    height: "100%",
+                    clipPath: "polygon(0% 50%, 100% 0%, 100% 100%)",
+                    background: "linear-gradient(to right, #166534, #4ade80, #facc15, #fb923c, #ef4444)",
+                  }} />
                 </div>
               </div>
 
