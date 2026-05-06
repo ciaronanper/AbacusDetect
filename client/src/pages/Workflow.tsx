@@ -29,12 +29,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ActionButton } from "@/components/ActionButton";
 import { StatusCard } from "@/components/StatusCard";
 import { Header } from "@/components/Header";
-import { QRScanner } from "@/components/QRScanner";
+import { CameraScanner } from "@/components/CameraScanner";
 import { useCreateResult } from "@/hooks/use-results";
 import { useToast } from "@/hooks/use-toast";
 import logoPng from "@assets/Vertical_logo_bgtransparent_1769613129480.png";
-import patientQr from "@assets/patientQR_1769614112153.webp";
-import nurseQr from "@assets/Screenshot_2026-01-28_153006_1769614259203.png";
 
 // === TYPES ===
 type Step = 
@@ -102,34 +100,37 @@ export default function Workflow() {
   const [vitals, setVitals] = useState<Vitals>({ temperature: "", spO2: "", respiratoryRate: "" });
   const [cleoTranscript, setCleoTranscript] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [resultPage, setResultPage] = useState(0);
-  const resultTouchStartX = useRef<number | null>(null);
   const { toast } = useToast();
   const createResult = useCreateResult();
 
   // === HELPERS ===
   const generateResult = (): TestResult => {
-    // 40% Low (0–4), 20% Moderate (5–59), 40% High (60–500)
+    // 30% Very Low (<10), 20% Low (10–49), 20% Moderate (50–200), 15% High (201–300), 15% Very High (>300)
     const r = Math.random();
     const saa2 =
-      r < 0.40 ? Math.floor(Math.random() * 5) :
-      r < 0.60 ? Math.floor(5 + Math.random() * 55) :
-                 Math.floor(60 + Math.random() * 441);
+      r < 0.30 ? Math.floor(Math.random() * 10) :
+      r < 0.50 ? Math.floor(10 + Math.random() * 40) :
+      r < 0.70 ? Math.floor(50 + Math.random() * 151) :
+      r < 0.85 ? Math.floor(201 + Math.random() * 100) :
+                 Math.floor(301 + Math.random() * 300);
+
     let level = "";
     let interpretation = "";
-
-    if (saa2 < 5) {
+    if (saa2 < 10) {
+      level = "Very Low";
+      interpretation = "Very low probability of SBI";
+    } else if (saa2 < 50) {
       level = "Low";
-      interpretation = "Normal range — serious bacterial infection effectively ruled out";
-    } else if (saa2 < 60) {
-      level = "Moderate";
-      interpretation = "Moderate elevation — less likely but infection cannot be excluded";
+      interpretation = "Low probability of SBI";
     } else if (saa2 <= 200) {
+      level = "Moderate";
+      interpretation = "Moderate probability of SBI";
+    } else if (saa2 <= 300) {
       level = "High";
-      interpretation = "Elevated — 3.5× increased risk of serious bacterial infection";
+      interpretation = "High probability of SBI";
     } else {
       level = "Very High";
-      interpretation = "Markedly elevated — 8× increased risk of serious bacterial infection";
+      interpretation = "Very high probability of SBI";
     }
 
     return { saa2, level, interpretation };
@@ -150,16 +151,6 @@ export default function Workflow() {
       timer = setTimeout(() => {
         setStep("nurse-auth-choice");
       }, 2500);
-    } else if (step === "nurse-scan") {
-      // Step 3: Nurse Scan (5s) -> Nurse Confirm
-      timer = setTimeout(() => {
-        setNurseAuthMethod("scan");
-        setConfirmedNurseId(generateNurseId());
-        setStep("nurse-confirm");
-      }, SCAN_DURATION_MS);
-    } else if (step === "patient-scan") {
-      // Step 5: Patient Scan (5s) -> Patient Confirm
-      timer = setTimeout(() => setStep("patient-confirm"), SCAN_DURATION_MS);
     } else if (step === "vitals-auto") {
       // Automated vitals gathering (3s)
       timer = setTimeout(() => {
@@ -183,7 +174,6 @@ export default function Workflow() {
           interpretation: newResult.interpretation
         });
 
-        setResultPage(0);
         setStep("results");
       }, 5000);
     } else if (step === "uploading") {
@@ -301,28 +291,20 @@ export default function Workflow() {
       case "nurse-scan":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
-            <QRScanner 
-              label="Scanning Nurse QR / Barcode" 
+            <CameraScanner
+              label="Scanning Nurse ID"
+              countdownSeconds={3}
               onScan={() => {
                 setNurseAuthMethod("scan");
                 setConfirmedNurseId(generateNurseId());
                 setStep("nurse-confirm");
-              }} 
-              overlayImage={nurseQr}
+              }}
             />
-            
-            <StatusCard 
+            <StatusCard
               icon={User}
               title="Scan Nurse ID"
-              description="Align barcode within the frame"
+              description="Hold your ID badge to the front camera"
             />
-            
-            {/* Hidden debug button to skip wait */}
-            <button onClick={() => {
-              setNurseAuthMethod("scan");
-              setConfirmedNurseId(generateNurseId());
-              setStep("nurse-confirm");
-            }} className="opacity-0 h-10">Skip</button>
           </div>
         );
 
@@ -411,20 +393,16 @@ export default function Workflow() {
       case "patient-scan":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
-            <QRScanner 
-              label="Scanning Patient ID" 
-              onScan={() => setStep("patient-confirm")} 
-              overlayImage={patientQr}
+            <CameraScanner
+              label="Scanning Patient Wristband"
+              countdownSeconds={3}
+              onScan={() => setStep("patient-confirm")}
             />
-            
-            <StatusCard 
+            <StatusCard
               icon={User}
               title="Scan Patient ID"
-              description="Align wristband barcode"
+              description="Point camera at patient wristband"
             />
-
-             {/* Hidden debug button to skip wait */}
-             <button onClick={() => setStep("patient-confirm")} className="opacity-0 h-10">Skip</button>
           </div>
         );
 
@@ -730,66 +708,16 @@ export default function Workflow() {
       case "results":
         if (!result) return null;
         
-        // Clinical SAA2 thresholds:
-        // <5 mg/L  → Low      (rule out serious infection)
-        // 5–60     → Moderate (less likely, non-serious mean = 41 mg/L)
-        // 60–200   → High     (3.5× more likely to be serious)
-        // >200     → Very High (8× more likely; serious infection mean = 256 mg/L)
-        let severeProbability: "Very High" | "High" | "Moderate" | "Low";
-        if (result.saa2 > 200)      severeProbability = "Very High";
-        else if (result.saa2 >= 60) severeProbability = "High";
-        else if (result.saa2 >= 5)  severeProbability = "Moderate";
-        else                         severeProbability = "Low";
+        // 5-band SAA2 classification
+        type Band = { label: string; text: string; bg: string; border: string; textColor: string; badgeColor: string };
+        const band: Band =
+          result.saa2 < 10   ? { label: "Very Low",  text: "Very low probability of SBI",  bg: "bg-green-50",  border: "border-green-200",  textColor: "text-green-900",  badgeColor: "bg-green-800"  } :
+          result.saa2 < 50   ? { label: "Low",        text: "Low probability of SBI",        bg: "bg-green-50",  border: "border-green-200",  textColor: "text-green-700",  badgeColor: "bg-green-500"  } :
+          result.saa2 <= 200 ? { label: "Moderate",   text: "Moderate probability of SBI",   bg: "bg-yellow-50", border: "border-yellow-200", textColor: "text-yellow-700", badgeColor: "bg-yellow-500" } :
+          result.saa2 <= 300 ? { label: "High",       text: "High probability of SBI",       bg: "bg-orange-50", border: "border-orange-200", textColor: "text-orange-700", badgeColor: "bg-orange-500" } :
+                               { label: "Very High",  text: "Very high probability of SBI",  bg: "bg-red-50",    border: "border-red-200",    textColor: "text-red-700",    badgeColor: "bg-red-500"    };
 
-        const isHighRisk = severeProbability === "High" || severeProbability === "Very High";
-        const isMedRisk  = severeProbability === "Moderate";
-
-        // Generate clinical reasoning text
-        const buildReasoning = (): string => {
-          const parts: string[] = [];
-          const saa2Val = result.saa2;
-
-          // SAA2
-          if (saa2Val > 200)       parts.push(`SAA2 ${saa2Val} mg/L — markedly elevated (8× serious infection risk).`);
-          else if (saa2Val >= 60)  parts.push(`SAA2 ${saa2Val} mg/L — elevated, 3.5× increased risk of serious infection.`);
-          else if (saa2Val >= 5)   parts.push(`SAA2 ${saa2Val} mg/L — moderate range; serious infection less likely.`);
-          else                      parts.push(`SAA2 ${saa2Val} mg/L — normal; serious bacterial infection effectively ruled out.`);
-
-          // Vitals
-          if (vitals.temperature) {
-            const temp = parseFloat(vitals.temperature);
-            if (temp >= 100.4)      parts.push(`Fever ${temp}°F — supports active infection.`);
-            else if (temp < 96.8)   parts.push(`Hypothermia ${temp}°F — possible severe sepsis.`);
-            else                    parts.push(`Temp ${temp}°F — normal.`);
-          }
-          if (vitals.spO2) {
-            const spo2 = parseFloat(vitals.spO2);
-            if (spo2 < 90)          parts.push(`SpO₂ ${spo2}% — critically low.`);
-            else if (spo2 < 95)     parts.push(`SpO₂ ${spo2}% — mildly reduced.`);
-            else                    parts.push(`SpO₂ ${spo2}% — adequate.`);
-          }
-          if (vitals.respiratoryRate) {
-            const rr = parseFloat(vitals.respiratoryRate);
-            if (rr > 20)            parts.push(`RR ${rr}/min — tachypnoea, consistent with infection.`);
-            else if (rr < 12)       parts.push(`RR ${rr}/min — below normal.`);
-            else                    parts.push(`RR ${rr}/min — normal.`);
-          }
-
-          // Conclusion
-          if (severeProbability === "Very High")     parts.push(`Urgent review — very high IBI likelihood.`);
-          else if (severeProbability === "High")     parts.push(`Clinical review recommended — high IBI likelihood.`);
-          else if (severeProbability === "Moderate") parts.push(`Monitor closely — infection cannot be excluded.`);
-          else                                        parts.push(`Low overall risk — infection unlikely.`);
-
-          return parts.join(' ');
-        };
-
-        const reasoning = buildReasoning();
-
-        // Severity score: 0–10 scale mapped directly from SAA2
-        // SAA2  0–10  → score 0–4  (green,  rule out) — linear
-        // SAA2 10–50  → score 4–6  (yellow, moderate) — linear, continuous at boundaries
-        // SAA2 50–∞   → score 6–10 (red,    rule in)  — exponential; ~9.5 at 300, ~10 at 1000
+        // Severity score: SAA2 0–10→0–4, 10–50→4–6, 50+→6–10 exponential
         const severityScore = (() => {
           const s = result.saa2;
           if (s <= 10) return Math.round((s / 10) * 4 * 10) / 10;
@@ -797,13 +725,6 @@ export default function Workflow() {
           const k = 0.00716;
           return Math.round(Math.min(10, 6 + 4 * (1 - Math.exp(-k * (s - 50)))) * 10) / 10;
         })();
-        // Labels/colours match gauge zones: green 0–4 = Low, yellow 4–6 = Moderate, red 6–10 = High
-        const severityLabel =
-          severityScore >= 6 ? "High" :
-          severityScore >= 4 ? "Moderate" : "Low";
-        const severityBadgeColor =
-          severityScore >= 6 ? "bg-red-500" :
-          severityScore >= 4 ? "bg-amber-400" : "bg-green-500";
         const pinLeft = `clamp(12px, calc(${(severityScore / 10) * 100}% - 12px), calc(100% - 12px))`;
 
         const startNotesRecording = async () => {
@@ -837,233 +758,124 @@ export default function Workflow() {
           setIsRecording(false);
         };
 
-        // IBI likelihood %: same band as severeProbability — always consistent
-        const ibiPercentage = (() => {
-          const s = result.saa2;
-          if (severeProbability === "Very High") return 82 + Math.round(((Math.min(s, 500) - 201) / 299) * 17);
-          if (severeProbability === "High")      return 55 + Math.round(((s - 60)  / 140) * 27);
-          if (severeProbability === "Moderate")  return 10 + Math.round(((s - 5)   / 55)  * 25);
-          return 1 + Math.round((s / 5) * 9);
-        })();
+        return (
+          <div className="flex flex-col h-full max-w-sm mx-auto">
+            <div className="flex-1 overflow-y-auto pb-4 space-y-3">
 
-        // SAA2 threshold label for screen 3 — show raw value in the moderate band, labels at extremes
-        const saa2Threshold = result.saa2 > 200 ? "> 200 mg/L" : result.saa2 < 5 ? "< 5 mg/L" : `${result.saa2} mg/L`;
-        
-        const resultPageContent = (pageIndex: number) => (
-          <div className="flex flex-col h-full pb-4 relative">
-            <div className="bg-muted/60 border border-border rounded-xl px-3 py-2 mb-2 flex items-center justify-between text-xs text-muted-foreground" data-testid="card-patient-info-header">
-              <div>
-                <span className="uppercase tracking-wide block">Patient ID</span>
-                <span className="font-bold text-foreground">{MOCK_PATIENT}</span>
+              {/* Patient info header */}
+              <div className="bg-muted/60 border border-border rounded-xl px-3 py-2 flex items-center justify-between text-xs text-muted-foreground" data-testid="card-patient-info-header">
+                <div>
+                  <span className="uppercase tracking-wide block">Patient ID</span>
+                  <span className="font-bold text-foreground">{MOCK_PATIENT}</span>
+                </div>
+                <div className="text-center">
+                  <span className="uppercase tracking-wide block">Nurse</span>
+                  <span className="font-bold text-foreground">{confirmedNurseId}</span>
+                </div>
+                {resultDateTime && (
+                  <div className="text-right">
+                    <span className="block">{resultDateTime.toLocaleDateString()}</span>
+                    <span>{resultDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                  </div>
+                )}
               </div>
-              <div className="text-center">
-                <span className="uppercase tracking-wide block">Nurse</span>
-                <span className="font-bold text-foreground">{confirmedNurseId}</span>
+
+              {/* Probability card */}
+              <div className={cn("p-4 rounded-xl border-2 text-center", band.bg, band.border)} data-testid="card-probability">
+                <span className="text-xs font-bold uppercase opacity-60 block mb-1">Probability of SBI</span>
+                <p className={cn("text-2xl font-bold", band.textColor)} data-testid="text-sbi-probability">{band.text}</p>
+                <span className={cn("inline-block mt-2 text-xs font-bold px-3 py-0.5 rounded-full text-white", band.badgeColor)}>{band.label}</span>
               </div>
-              {resultDateTime && (
-                <div className="text-right">
-                  <span className="block">{resultDateTime.toLocaleDateString()}</span>
-                  <span>{resultDateTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+
+              {/* SAA2 level card */}
+              <div className={cn("p-4 rounded-xl border-2 text-center", band.bg, band.border)} data-testid="card-saa2-level">
+                <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
+                <p className={cn("text-3xl font-bold mt-1 tabular-nums", band.textColor)} data-testid="text-saa2-value">
+                  {result.saa2} <span className="text-base font-normal">mg/L</span>
+                </p>
+              </div>
+
+              {/* Severity gauge */}
+              <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Illness Severity Score</span>
+                  <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full text-white", band.badgeColor)}>{severityScore} / 10</span>
+                </div>
+                <div className="relative px-1">
+                  <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
+                    <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[10px] font-bold shadow-md text-gray-800">{severityScore}</div>
+                    <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-gray-400" />
+                  </div>
+                  <div className="mt-8 rounded-lg border border-gray-300 overflow-hidden">
+                    <div className="flex h-4">
+                      <div className="bg-green-500" style={{ width: "40%" }} />
+                      <div className="bg-yellow-400" style={{ width: "20%" }} />
+                      <div className="bg-red-500" style={{ width: "40%" }} />
+                    </div>
+                  </div>
+                </div>
+                <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
+                  <span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span>
+                </div>
+                <div className="flex mt-3">
+                  <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}>← Rule out</div>
+                  <div style={{ width: "20%" }} />
+                  <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
+                </div>
+              </div>
+
+              {/* Vitals */}
+              {vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
+                <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid="card-vitals">
+                  <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Patient Vitals</span>
+                  <div className="grid grid-cols-3 gap-2 text-center">
+                    <div>
+                      <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                        <Thermometer className="w-3 h-3" />
+                        <span className="text-[10px]">Temp</span>
+                      </div>
+                      <p className="text-base font-mono font-bold">{vitals.temperature}°F</p>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                        <Heart className="w-3 h-3" />
+                        <span className="text-[10px]">SpO₂</span>
+                      </div>
+                      <p className="text-base font-mono font-bold">{vitals.spO2}%</p>
+                    </div>
+                    <div>
+                      <div className="flex items-center justify-center gap-1 text-muted-foreground">
+                        <Wind className="w-3 h-3" />
+                        <span className="text-[10px]">Resp</span>
+                      </div>
+                      <p className="text-base font-mono font-bold">{vitals.respiratoryRate}</p>
+                    </div>
+                  </div>
                 </div>
               )}
-            </div>
-            <div className="flex-1 space-y-3 overflow-y-auto">
-              <div className="space-y-3">
-                {/* TOP CARD
-                    Page 1: Probability of SBI
-                    Page 2: Likelihood of IBI %
-                    Page 3: SAA2 Level (threshold) */}
-                {pageIndex === 1 ? (
-                  <div className={cn("p-4 rounded-xl border-2 text-center", isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100")}>
-                    <span className="text-xs font-bold uppercase opacity-60 block">Likelihood of Invasive Bacterial Infection</span>
-                    <p className={cn("text-3xl font-bold mt-1", isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700")} data-testid={`text-ibi-percentage-${pageIndex}`}>{ibiPercentage}<span className="text-lg font-normal">%</span></p>
-                  </div>
-                ) : pageIndex === 2 ? (
-                  <div className={cn("p-4 rounded-xl border-2 text-center", isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100")}>
-                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
-                    <p className={cn("text-2xl font-bold mt-1", isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700")} data-testid={`text-saa2-threshold-${pageIndex}`}>{saa2Threshold}</p>
-                  </div>
-                ) : (
-                  <div className={cn("p-4 rounded-xl border-2 text-center", isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-green-50 border-green-100")}>
-                    <span className="text-xs font-bold uppercase opacity-60 block">Probability of Severe Infection</span>
-                    <p className={cn("text-2xl font-bold mt-1", isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-green-700")} data-testid={`text-severe-probability-${pageIndex}`}>{severeProbability}</p>
+
+              {/* Notes */}
+              <div className="pt-1 border-t border-border space-y-2">
+                <ActionButton
+                  fullWidth
+                  variant={isRecording ? "danger" : "outline"}
+                  onClick={isRecording ? stopNotesRecording : startNotesRecording}
+                  data-testid="button-record-notes"
+                >
+                  {isRecording ? <MicOff className="w-5 h-5 mr-2" /> : <Mic className="w-5 h-5 mr-2" />}
+                  {isRecording ? "Stop Recording" : "Record Notes"}
+                </ActionButton>
+                {resultNote && (
+                  <div className="bg-muted rounded-xl p-3 text-sm text-foreground" data-testid="text-result-note">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">Notes</span>
+                    {resultNote}
                   </div>
                 )}
-
-                {/* MIDDLE CARD
-                    Page 1: raw SAA2
-                    Page 2: SAA2 threshold
-                    Page 3: Severity gauge */}
-                {pageIndex === 2 ? (
-                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge-p3">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Illness Severity Score</span>
-                      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full text-white", severityBadgeColor)}>{severityLabel}</span>
-                    </div>
-                    <div className="relative px-1">
-                      <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
-                        <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[10px] font-bold shadow-md text-gray-800">{severityScore}</div>
-                        <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-gray-400" />
-                      </div>
-                      <div className="mt-8 rounded-lg border border-gray-300 overflow-hidden">
-                        <div className="flex h-4">
-                          <div className="bg-green-500" style={{ width: "40%" }} />
-                          <div className="bg-yellow-400" style={{ width: "20%" }} />
-                          <div className="bg-red-500" style={{ width: "40%" }} />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
-                      <span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span>
-                    </div>
-                    <div className="flex mt-3">
-                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}>← Rule out</div>
-                      <div style={{ width: "20%" }} />
-                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className={cn("p-4 rounded-xl border-2 text-center", isHighRisk ? "bg-red-50 border-red-100" : isMedRisk ? "bg-amber-50 border-amber-100" : "bg-blue-50 border-blue-100")}>
-                    <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
-                    <p className={cn("text-2xl font-bold mt-1", isHighRisk ? "text-red-700" : isMedRisk ? "text-amber-700" : "text-blue-700")} data-testid={pageIndex === 0 ? "text-saa2-level" : `text-saa2-threshold-${pageIndex}`}>
-                      {pageIndex === 0 ? <>{result.saa2} <span className="text-sm font-normal">mg/L</span></> : saa2Threshold}
-                    </p>
-                  </div>
-                )}
-
-                {/* BOTTOM CARD
-                    Page 1: Severity gauge
-                    Page 2: Clinical Reasoning
-                    Page 3: (nothing) */}
-                {pageIndex === 0 ? (
-                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge">
-                    <div className="flex items-center justify-between mb-4">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Illness Severity Score</span>
-                      <span className={cn("text-xs font-bold px-2 py-0.5 rounded-full text-white", severityBadgeColor)}>{severityLabel}</span>
-                    </div>
-                    <div className="relative px-1">
-                      <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
-                        <div className="w-6 h-6 rounded-full bg-white border-2 border-gray-400 flex items-center justify-center text-[10px] font-bold shadow-md text-gray-800">{severityScore}</div>
-                        <div className="w-0 h-0 border-l-[4px] border-l-transparent border-r-[4px] border-r-transparent border-t-[5px] border-t-gray-400" />
-                      </div>
-                      <div className="mt-8 rounded-lg border border-gray-300 overflow-hidden">
-                        <div className="flex h-4">
-                          <div className="bg-green-500" style={{ width: "40%" }} />
-                          <div className="bg-yellow-400" style={{ width: "20%" }} />
-                          <div className="bg-red-500" style={{ width: "40%" }} />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1 px-1">
-                      <span>0</span><span>2</span><span>4</span><span>6</span><span>8</span><span>10</span>
-                    </div>
-                    <div className="flex mt-3">
-                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 50%, 15% 0%, 100% 0%, 100% 100%, 15% 100%)", background: "#22c55e", height: "22px", lineHeight: 1 }}>← Rule out</div>
-                      <div style={{ width: "20%" }} />
-                      <div className="flex items-center justify-center text-white text-xs font-bold" style={{ width: "40%", clipPath: "polygon(0% 0%, 85% 0%, 100% 50%, 85% 100%, 0% 100%)", background: "#ef4444", height: "22px", lineHeight: 1 }}>Rule in →</div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid={`card-reasoning-${pageIndex}`}>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Clinical Reasoning</span>
-                    <p className="text-sm text-foreground leading-relaxed">{reasoning}</p>
-                  </div>
-                )}
-
-                {pageIndex === 0 && vitals.temperature && vitals.spO2 && vitals.respiratoryRate && (
-                  <div className="bg-card border border-border rounded-xl p-3 shadow-sm" data-testid={`card-vitals-${pageIndex}`}>
-                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-2">Patient Vitals</span>
-                    <div className="grid grid-cols-3 gap-2 text-center">
-                      <div>
-                        <div className="flex items-center justify-center gap-1 text-muted-foreground">
-                          <Thermometer className="w-3 h-3" />
-                          <span className="text-[10px]">Temp</span>
-                        </div>
-                        <p className="text-base font-mono font-bold">{vitals.temperature}°F</p>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-center gap-1 text-muted-foreground">
-                          <Heart className="w-3 h-3" />
-                          <span className="text-[10px]">SpO₂</span>
-                        </div>
-                        <p className="text-base font-mono font-bold">{vitals.spO2}%</p>
-                      </div>
-                      <div>
-                        <div className="flex items-center justify-center gap-1 text-muted-foreground">
-                          <Wind className="w-3 h-3" />
-                          <span className="text-[10px]">Resp</span>
-                        </div>
-                        <p className="text-base font-mono font-bold">{vitals.respiratoryRate}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className="pt-2 border-t border-border space-y-2">
-                  <ActionButton
-                    fullWidth
-                    variant={isRecording ? "danger" : "outline"}
-                    onClick={isRecording ? stopNotesRecording : startNotesRecording}
-                    data-testid="button-record-notes"
-                  >
-                    {isRecording ? <MicOff className="w-5 h-5 mr-2" /> : <Mic className="w-5 h-5 mr-2" />}
-                    {isRecording ? "Stop Recording" : "Record Notes"}
-                  </ActionButton>
-                  {resultNote && (
-                    <div className="bg-muted rounded-xl p-3 text-sm text-foreground" data-testid="text-result-note">
-                      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">Notes</span>
-                      {resultNote}
-                    </div>
-                  )}
-                </div>
               </div>
-            </div>
 
-            <div className="pt-3 space-y-2">
               <ActionButton fullWidth variant="outline" onClick={() => setStep("uploading")} data-testid="button-upload-ehr">
                 Upload Data to Health Record
               </ActionButton>
-            </div>
-          </div>
-        );
-
-        return (
-          <div className="flex flex-col h-full max-w-sm mx-auto">
-            <div
-              className="flex-1 overflow-hidden relative"
-              onTouchStart={(e) => { resultTouchStartX.current = e.touches[0].clientX; }}
-              onTouchEnd={(e) => {
-                if (resultTouchStartX.current === null) return;
-                const delta = resultTouchStartX.current - e.changedTouches[0].clientX;
-                if (delta > 50 && resultPage < 2) setResultPage(p => p + 1);
-                if (delta < -50 && resultPage > 0) setResultPage(p => p - 1);
-                resultTouchStartX.current = null;
-              }}
-            >
-              <div
-                className="flex h-full transition-transform duration-300 ease-in-out"
-                style={{ width: "300%", transform: `translateX(-${resultPage * (100 / 3)}%)` }}
-              >
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-full" style={{ width: "33.333%" }}>
-                    {resultPageContent(i)}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex justify-center gap-2 py-2">
-              {[0, 1, 2].map((i) => (
-                <button
-                  key={i}
-                  onClick={() => setResultPage(i)}
-                  className={cn(
-                    "w-2 h-2 rounded-full transition-colors",
-                    resultPage === i ? "bg-primary" : "bg-muted-foreground/30"
-                  )}
-                  data-testid={`dot-result-page-${i}`}
-                />
-              ))}
             </div>
           </div>
         );
