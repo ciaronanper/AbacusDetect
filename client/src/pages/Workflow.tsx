@@ -751,7 +751,7 @@ export default function Workflow() {
               {/* Probability card */}
               <div className={cn("p-4 rounded-xl border-2 text-center", band.bg, band.border)} data-testid="card-probability">
                 <span className="text-xs font-bold uppercase opacity-60 block mb-2">Probability of SBI</span>
-                <span className={cn("inline-block text-sm font-bold px-4 py-1 rounded-full text-white", band.badgeColor)} data-testid="text-sbi-probability">{band.label}</span>
+                <span className={cn("inline-block text-xl font-bold px-5 py-1.5 rounded-full text-white", band.badgeColor)} data-testid="text-sbi-probability">{band.label}</span>
               </div>
 
               {/* SAA2 level card */}
@@ -781,9 +781,26 @@ export default function Workflow() {
                     </div>
                   </div>
                 </div>
-                {/* Boundary labels */}
-                <div className="flex justify-between text-xs text-muted-foreground mt-1 px-0.5">
-                  <span>0</span><span>10</span><span>50</span><span>200</span><span>300</span><span>600+</span>
+                {/* Boundary labels — positioned at each band transition */}
+                <div className="relative h-5 mt-1">
+                  {[
+                    { label: "0",    pct: 0  },
+                    { label: "10",   pct: 20 },
+                    { label: "50",   pct: 40 },
+                    { label: "200",  pct: 60 },
+                    { label: "300+", pct: 80 },
+                  ].map(({ label, pct }) => (
+                    <span
+                      key={label}
+                      className="absolute text-xs text-muted-foreground"
+                      style={{
+                        left: `${pct}%`,
+                        transform: pct === 0 ? "none" : "translateX(-50%)",
+                      }}
+                    >
+                      {label}
+                    </span>
+                  ))}
                 </div>
                 {/* Severity triangle — narrow at low end, wide at high end */}
                 <div className="mt-2 w-full" style={{ height: "36px" }}>
