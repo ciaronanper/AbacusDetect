@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cleo-v2';
+const CACHE_NAME = 'cleo-v3';
 
 // On install, skip waiting so new SW activates immediately
 self.addEventListener('install', (event) => {
