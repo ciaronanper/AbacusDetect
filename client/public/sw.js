@@ -1,11 +1,11 @@
-const CACHE_NAME = 'cleo-v3';
+const CACHE_NAME = 'cleo-v4';
 
 // On install, skip waiting so new SW activates immediately
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
-// On activate, delete old caches
+// On activate, delete old caches and claim all clients
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
@@ -18,8 +18,7 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
-  // API calls: network first, fall back to a mock success response so the
-  // app continues working offline (pure mock — no real data is persisted)
+  // API calls: network only, fall back to a mock success response offline
   if (url.pathname.startsWith('/api/')) {
     event.respondWith(
       fetch(request).catch(() =>
@@ -32,29 +31,25 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Everything else: cache first, then network; cache each successful response
+  // Everything else: NETWORK FIRST so updates are always picked up,
+  // fall back to cache only when truly offline
   event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      const cached = await cache.match(request);
-      if (cached) return cached;
-
-      try {
-        const networkResponse = await fetch(request);
-        // Cache successful GET responses (not opaque cross-origin)
-        if (
-          networkResponse.ok &&
-          request.method === 'GET' &&
-          !url.pathname.startsWith('/api/')
-        ) {
-          cache.put(request, networkResponse.clone());
+    fetch(request)
+      .then((networkResponse) => {
+        if (networkResponse.ok && request.method === 'GET') {
+          const clone = networkResponse.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
         }
         return networkResponse;
-      } catch {
-        // If offline and nothing cached, return a minimal offline page
-        return new Response('<h2>You are offline</h2>', {
-          headers: { 'Content-Type': 'text/html' },
-        });
-      }
-    })
+      })
+      .catch(() =>
+        caches.match(request).then(
+          (cached) =>
+            cached ||
+            new Response('<h2>You are offline</h2>', {
+              headers: { 'Content-Type': 'text/html' },
+            })
+        )
+      )
   );
 });
