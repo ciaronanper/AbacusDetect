@@ -65,6 +65,7 @@ export default function Workflow() {
   const savedRef = useRef(false);
   const prevViewRef = useRef("");
   const autoConnectedRef = useRef(false);
+  const simPlayedRef = useRef(false);
 
   // --- Start the assay countdown when the device reports SAMPLE_DETECTED ---
   useEffect(() => {
@@ -132,6 +133,26 @@ export default function Workflow() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Simulator preview: once the phone-side scans are done and the device-driven
+  // phase begins, auto-play a realistic reader sequence so the whole flow is
+  // visible without touching the manual panel. Runs once per test; the manual
+  // Reader Simulator panel below is still available to trigger specific states.
+  useEffect(() => {
+    if (phase !== "running" || reader.kind !== "simulator" || simPlayedRef.current) return;
+    simPlayedRef.current = true;
+    const sequence: Array<{ at: number; line: string }> = [
+      { at: 300, line: "BATTERY:HIGH" },
+      { at: 800, line: "SCREEN:HOME" },
+      { at: 2300, line: "VIEW:APPLY_DROPS" },
+      { at: 3800, line: "VIEW:SAMPLE_DETECTED" },
+      { at: 6300, line: "SCREEN:RUNASSAY" },
+      { at: 7500, line: "RESULT:162:mg/L" },
+      { at: 7800, line: "SCREEN:DISPLAYRESULT" },
+    ];
+    const timers = sequence.map(({ at, line }) => setTimeout(() => reader.inject(line), at));
+    return () => timers.forEach(clearTimeout);
+  }, [phase, reader.kind, reader.inject]);
+
   // --- Handlers ------------------------------------------------------------
   const connectUsb = async () => {
     try {
@@ -146,7 +167,9 @@ export default function Workflow() {
         title: "Reader not connected",
         description: reader.isNativePlatform
           ? "Plug the reader into the phone and allow USB access when prompted, then try again."
-          : "USB serial needs desktop Chrome/Edge or the packaged Android build. Use the simulator to preview the flow.",
+          : reader.webSerialSupported
+          ? "No reader detected over USB. Connect the MicroNow reader to this computer, or use the Android app with the reader plugged into the phone. Or tap \u201CUse Simulator\u201D to preview the flow."
+          : "USB serial needs desktop Chrome/Edge or the packaged Android app. Tap \u201CUse Simulator\u201D to preview the flow.",
         variant: "destructive",
       });
     }
@@ -159,6 +182,7 @@ export default function Workflow() {
 
   const newTest = () => {
     savedRef.current = false;
+    simPlayedRef.current = false;
     setNurseId("");
     setPatientId("");
     setTimeLeft(0);
@@ -170,6 +194,7 @@ export default function Workflow() {
   const goHome = async () => {
     await reader.disconnect();
     savedRef.current = false;
+    simPlayedRef.current = false;
     setNurseId("");
     setPatientId("");
     setTimeLeft(0);
@@ -371,8 +396,12 @@ export default function Workflow() {
             </div>
             <StatusCard
               icon={Usb}
-              title="Waiting for Reader"
-              description="Follow the prompts on the reader. This screen will update automatically."
+              title={reader.kind === "simulator" ? "Simulating Reader\u2026" : "Waiting for Reader"}
+              description={
+                reader.kind === "simulator"
+                  ? "Running a demo of the reader flow \u2014 the screens advance automatically."
+                  : "Follow the prompts on the reader. This screen will update automatically."
+              }
               status="processing"
             />
             <PatientChips />

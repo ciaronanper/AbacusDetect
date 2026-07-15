@@ -37,3 +37,12 @@ nice-to-haves:
 **How to apply:** verify device flows via the simulator panel + the pure
 `readerProtocol` state machine (run it under `tsx`), not by expecting live
 hardware/camera in preview.
+
+**Simulator must auto-drive the flow.** On entering the device-driven ("running")
+phase in simulator mode the app auto-plays the reader sequence. A bare "connect
+simulator" dead-ends at the WAITING screen (whose copy promises the screen
+updates automatically) because nothing is host-feeding lines. **Why:** the reader
+is the host; with no device and a hidden manual panel, users saw "nothing
+happens." **How to apply:** keep the manual panel, but the default preview path
+must advance on its own; gate the auto-play on `kind==='simulator'` so the
+real-hardware path is untouched, and make WAITING copy simulator-aware.
