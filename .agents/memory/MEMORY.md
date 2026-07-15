@@ -1,0 +1,1 @@
+- [MicroNow reader integration](micronow-reader-integration.md) — serial-host protocol quirks: DISPLAYRESULT is the sole result-bearing screen, power-button handshake, and camera/Web-Serial blocked in the Replit preview.

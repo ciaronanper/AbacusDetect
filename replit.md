@@ -2,7 +2,9 @@
 
 ## Overview
 
-AbacusDetect is a medical diagnostic workflow application designed for point-of-care testing. It guides healthcare professionals (nurses) through a step-by-step process of patient identification, sample collection, and SAA2 biomarker testing. The application is built as a mobile-first React frontend with an Express backend, optimized for use on handheld devices in clinical settings.
+AbacusDetect is a medical diagnostic workflow application designed for point-of-care testing. It guides healthcare professionals (nurses) through patient identification and SAA2 biomarker testing on the physical MicroNow reader. The application is built as a mobile-first React frontend with an Express backend, optimized for use on handheld devices in clinical settings.
+
+The physical reader is the **host**: it streams line-based messages over serial (115200 8N1, CRLF-terminated) that tell the app which screen to show. After the app scans the nurse and patient QR codes (rear camera), the assay flow is **device-driven** — insert-cartridge, apply-sample, sample-detected, checking, and result screens appear only in response to the reader's serial messages, and the only on-screen control during that flow is a power button.
 
 ## User Preferences
 
@@ -54,9 +56,19 @@ shared/           # Shared code between client/server
 
 2. **Mobile-First UI**: Custom components like `ActionButton`, `StatusCard`, and `Header` are designed for touch interfaces with large tap targets and clear visual feedback.
 
-3. **Workflow State Machine**: The main `Workflow.tsx` page implements a multi-step process using a simple state machine pattern with a `Step` union type.
+3. **Device-Driven Workflow**: The main `Workflow.tsx` page has app-controlled phases (`connect` → `nurse-scan` → `patient-scan` → `running`). In the `running` phase the UI renders purely from `readerState.currentView`, which is derived from the reader's incoming serial messages — the app does not advance the assay on its own.
 
 4. **Component Library**: Uses shadcn/ui (new-york style) for consistent, accessible UI primitives built on Radix UI.
+
+### Physical Reader Integration
+- **Protocol** (`client/src/lib/readerProtocol.ts`): a TypeScript port of the reference Flutter `ReaderProtocol`. `applyMessage` reduces each serial line into `ReaderState`. `SCREEN:DISPLAYRESULT` is the **only** result-bearing screen — every other screen clears `resultText`, so it is the single trigger to display and persist a result. A missing/NaN result is never shown as `0`; it renders a "result unavailable / retest" state.
+- **Transport** (`client/src/lib/readerConnection.ts`): a `ReaderConnection` interface with two implementations — `WebSerialConnection` (real hardware; desktop Chrome/Edge, and the seam for a future Capacitor/WebUSB Android bridge) and `SimulatorConnection` (inject lines by hand). The `useReader` hook owns the connection and exposes the derived state, logs, and button commands.
+- **Power button**: sends `"0 BUTTON"` (press) / `"0 BUTTON_UP"` (release), matching the real firmware handshake.
+- **QR scanning** (`client/src/components/QrScanner.tsx`): real rear-camera scanning via jsQR (`facingMode: environment`) with a manual-entry fallback when the camera is unavailable.
+- **Sandbox note**: Web Serial and the camera are blocked in the Replit preview iframe, so the flow is verified here via the simulator panel (visible only when connected via the simulator) and the manual-entry fallback.
+
+### Data Storage Detail
+- The `results` table stores `value` (double precision) + `units` (text, default `mg/L`) as sent by the device (`RESULT:<value>:<units>`); `level`/`interpretation` come from the SAA2 5-band classification (`classifyValue`).
 
 ## External Dependencies
 
