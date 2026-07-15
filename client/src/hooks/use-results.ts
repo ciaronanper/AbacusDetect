@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api, buildUrl, type CreateResultInput } from "@shared/routes";
+import { api, type CreateResultInput } from "@shared/routes";
+import { apiUrl } from "@/lib/apiBase";
 
 export function useResults() {
   return useQuery({
     queryKey: [api.results.list.path],
     queryFn: async () => {
-      const res = await fetch(api.results.list.path, { credentials: "include" });
+      const res = await fetch(apiUrl(api.results.list.path), { credentials: "include" });
       if (!res.ok) throw new Error('Failed to fetch results');
       return api.results.list.responses[200].parse(await res.json());
     },
@@ -16,7 +17,7 @@ export function useCreateResult() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: CreateResultInput) => {
-      const res = await fetch(api.results.create.path, {
+      const res = await fetch(apiUrl(api.results.create.path), {
         method: api.results.create.method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

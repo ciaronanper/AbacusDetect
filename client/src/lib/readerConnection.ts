@@ -9,11 +9,12 @@
 //     for previewing the flow without the physical device.
 
 import { SERIAL_BAUD_RATE } from "./readerProtocol";
+import { registerPlugin, type PluginListenerHandle } from "@capacitor/core";
 
 type Listener<T> = (value: T) => void;
 
 export interface ReaderConnection {
-  readonly kind: "webserial" | "simulator";
+  readonly kind: "webserial" | "simulator" | "capacitor";
   isConnected(): boolean;
   connect(): Promise<void>;
   disconnect(): Promise<void>;
@@ -188,5 +189,103 @@ export class SimulatorConnection extends BaseConnection implements ReaderConnect
       const trimmed = line.trim();
       if (trimmed) this.emitLine(trimmed);
     });
+  }
+}
+
+// === NATIVE (CAPACITOR) ====================================================
+// Talks to the reader over Android USB serial through the native ReaderSerial
+// plugin (android/app/src/main/java/.../ReaderSerialPlugin.java). Selected
+// automatically when the app runs inside the packaged native build. The plugin
+// mirrors the Flutter UsbService: open the first device, 115200 8N1, DTR/RTS
+// high, CRLF line framing, write commands with a trailing CRLF.
+
+export interface SerialDeviceInfo {
+  deviceName: string;
+  vendorId: number;
+  productId: number;
+}
+
+export interface ReaderSerialPlugin {
+  listDevices(): Promise<{ devices: SerialDeviceInfo[] }>;
+  connect(options?: { baudRate?: number }): Promise<void>;
+  send(options: { command: string }): Promise<void>;
+  disconnect(): Promise<void>;
+  addListener(
+    eventName: "line",
+    listenerFunc: (data: { line: string }) => void,
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: "status",
+    listenerFunc: (data: { status: string }) => void,
+  ): Promise<PluginListenerHandle>;
+}
+
+export const ReaderSerial = registerPlugin<ReaderSerialPlugin>("ReaderSerial");
+
+export class CapacitorSerialConnection extends BaseConnection implements ReaderConnection {
+  readonly kind = "capacitor" as const;
+  private connected = false;
+  private handles: PluginListenerHandle[] = [];
+
+  isConnected(): boolean {
+    return this.connected;
+  }
+
+  async connect(): Promise<void> {
+    // Subscribe before opening so no early lines are missed.
+    this.handles.push(
+      await ReaderSerial.addListener("line", ({ line }) => this.emitLine(line)),
+    );
+    this.handles.push(
+      await ReaderSerial.addListener("status", ({ status }) => {
+        this.emitStatus(status);
+        const s = status.toLowerCase();
+        if (s.includes("connected to reader")) {
+          this.connected = true;
+        } else if (
+          s.includes("disconnect") ||
+          s.includes("error") ||
+          s.includes("denied") ||
+          s.includes("no usb")
+        ) {
+          // Terminal states (unplug, read error, permission denied) mark the
+          // transport as down so the UI can react and reconnect cleanly.
+          this.connected = false;
+        }
+      }),
+    );
+    try {
+      await ReaderSerial.connect({ baudRate: SERIAL_BAUD_RATE });
+      this.connected = true;
+    } catch (err) {
+      await this.removeHandles();
+      throw err;
+    }
+  }
+
+  async send(command: string): Promise<void> {
+    await ReaderSerial.send({ command });
+  }
+
+  async disconnect(): Promise<void> {
+    try {
+      await ReaderSerial.disconnect();
+    } catch {
+      /* ignore */
+    }
+    await this.removeHandles();
+    this.connected = false;
+    this.emitStatus("Disconnected");
+  }
+
+  private async removeHandles(): Promise<void> {
+    for (const h of this.handles) {
+      try {
+        await h.remove();
+      } catch {
+        /* ignore */
+      }
+    }
+    this.handles = [];
   }
 }

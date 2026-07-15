@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AbacusDetect</string>
+    <string name="title_activity_main">AbacusDetect</string>
+    <string name="package_name">com.abacuslabs.abacusdetect</string>
+    <string name="custom_url_scheme">com.abacuslabs.abacusdetect</string>
+</resources>

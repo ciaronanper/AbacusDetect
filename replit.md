@@ -62,13 +62,21 @@ shared/           # Shared code between client/server
 
 ### Physical Reader Integration
 - **Protocol** (`client/src/lib/readerProtocol.ts`): a TypeScript port of the reference Flutter `ReaderProtocol`. `applyMessage` reduces each serial line into `ReaderState`. `SCREEN:DISPLAYRESULT` is the **only** result-bearing screen — every other screen clears `resultText`, so it is the single trigger to display and persist a result. A missing/NaN result is never shown as `0`; it renders a "result unavailable / retest" state.
-- **Transport** (`client/src/lib/readerConnection.ts`): a `ReaderConnection` interface with two implementations — `WebSerialConnection` (real hardware; desktop Chrome/Edge, and the seam for a future Capacitor/WebUSB Android bridge) and `SimulatorConnection` (inject lines by hand). The `useReader` hook owns the connection and exposes the derived state, logs, and button commands.
+- **Transport** (`client/src/lib/readerConnection.ts`): a `ReaderConnection` interface with three implementations — `WebSerialConnection` (real hardware on desktop Chrome/Edge), `CapacitorSerialConnection` (real hardware on the packaged Android app, via the native `ReaderSerial` plugin), and `SimulatorConnection` (inject lines by hand). The `useReader` hook owns the connection, selects the native transport when `Capacitor.isNativePlatform()` is true, and exposes the derived state, logs, and button commands.
 - **Power button**: sends `"0 BUTTON"` (press) / `"0 BUTTON_UP"` (release), matching the real firmware handshake.
 - **QR scanning** (`client/src/components/QrScanner.tsx`): real rear-camera scanning via jsQR (`facingMode: environment`) with a manual-entry fallback when the camera is unavailable.
 - **Sandbox note**: Web Serial and the camera are blocked in the Replit preview iframe, so the flow is verified here via the simulator panel (visible only when connected via the simulator) and the manual-entry fallback.
 
 ### Data Storage Detail
 - The `results` table stores `value` (double precision) + `units` (text, default `mg/L`) as sent by the device (`RESULT:<value>:<units>`); `level`/`interpretation` come from the SAA2 5-band classification (`classifyValue`).
+
+### Android App (Capacitor)
+The web app is packaged as a native Android app with Capacitor so the app itself owns the USB connection to the reader (USB host / OTG), mirroring the reference Flutter app. Build/run instructions live in `ANDROID.md`.
+- **Config** (`capacitor.config.ts`): appId `com.abacuslabs.abacusdetect`, `webDir: dist/public`. `CapacitorHttp` is enabled so the packaged app's `fetch` calls reach the deployed backend without CORS restrictions.
+- **Native plugin** (`android/app/src/main/java/com/abacuslabs/abacusdetect/ReaderSerialPlugin.java`): a Capacitor plugin named `ReaderSerial` built on `usb-serial-for-android` (the library the Flutter `usb_serial` plugin wraps). It opens the first serial device at 115200 8N1 with DTR/RTS high, reads CRLF-framed lines on a background thread (`line` events), reports connection state (`status` events), and writes commands with a trailing CRLF — parity with the Flutter `UsbService`. Registered in `MainActivity.java`.
+- **Device matching** (`android/app/src/main/res/xml/device_filter.xml`): lists common serial-chip vendor IDs and auto-launches the app on plug-in; add the reader's real VID/PID (decimal) if it is not detected.
+- **Results backend**: set `VITE_API_BASE_URL` (see `client/.env.example`) to the deployed URL before building; `client/src/lib/apiBase.ts` prefixes API calls with it **only on native** (relative URLs on web). Save failures degrade gracefully — the diagnostic flow never depends on the network.
+- **Building the APK**: the Replit container has no Android SDK/JDK, so the APK is not built here. The repo contains the full Capacitor project; build and run it from Android Studio. USB and camera only work on a physical device.
 
 ## External Dependencies
 

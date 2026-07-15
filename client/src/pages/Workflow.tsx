@@ -64,6 +64,7 @@ export default function Workflow() {
 
   const savedRef = useRef(false);
   const prevViewRef = useRef("");
+  const autoConnectedRef = useRef(false);
 
   // --- Start the assay countdown when the device reports SAMPLE_DETECTED ---
   useEffect(() => {
@@ -114,16 +115,38 @@ export default function Workflow() {
     );
   }, [readerState, phase, nurseId, patientId, createResult, view, toast]);
 
+  // Native auto-connect: mirror the Flutter app, which opens the USB connection
+  // as soon as the reader screen appears. Runs once on the packaged Android
+  // build; on the web the user taps "Connect Reader (USB)" instead.
+  useEffect(() => {
+    if (autoConnectedRef.current || !reader.isNativePlatform) return;
+    autoConnectedRef.current = true;
+    (async () => {
+      try {
+        await reader.connectNative();
+        setPhase("nurse-scan");
+      } catch {
+        /* No device yet or permission denied — the connect screen stays up. */
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // --- Handlers ------------------------------------------------------------
   const connectUsb = async () => {
     try {
-      await reader.connectWebSerial();
+      if (reader.isNativePlatform) {
+        await reader.connectNative();
+      } else {
+        await reader.connectWebSerial();
+      }
       setPhase("nurse-scan");
     } catch {
       toast({
         title: "Reader not connected",
-        description:
-          "USB serial needs desktop Chrome/Edge or the packaged Android build. Use the simulator to preview the flow.",
+        description: reader.isNativePlatform
+          ? "Plug the reader into the phone and allow USB access when prompted, then try again."
+          : "USB serial needs desktop Chrome/Edge or the packaged Android build. Use the simulator to preview the flow.",
         variant: "destructive",
       });
     }
@@ -520,16 +543,16 @@ export default function Workflow() {
               <p className="text-sm text-muted-foreground">Plug in the MicroNow reader over USB to begin.</p>
             </div>
             <div className="w-full space-y-3">
-              <ActionButton fullWidth onClick={connectUsb} data-testid="button-connect-usb">
+              <ActionButton fullWidth onClick={connectUsb} disabled={reader.connecting} data-testid="button-connect-usb">
                 <Usb className="w-5 h-5 mr-2" />
-                Connect Reader (USB)
+                {reader.connecting ? "Connecting…" : "Connect Reader (USB)"}
               </ActionButton>
-              <ActionButton variant="outline" fullWidth onClick={connectSimulator} data-testid="button-connect-simulator">
+              <ActionButton variant="outline" fullWidth onClick={connectSimulator} disabled={reader.connecting} data-testid="button-connect-simulator">
                 <Bug className="w-5 h-5 mr-2" />
                 Use Simulator (Preview)
               </ActionButton>
             </div>
-            {!reader.webSerialSupported && (
+            {!reader.isNativePlatform && !reader.webSerialSupported && (
               <p className="text-xs text-center text-muted-foreground">
                 USB serial needs desktop Chrome/Edge or the packaged Android build. Use the simulator to preview the flow here.
               </p>

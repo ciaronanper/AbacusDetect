@@ -7,15 +7,17 @@ import {
   BUTTON_UP_COMMAND,
 } from "@/lib/readerProtocol";
 import {
+  CapacitorSerialConnection,
   isWebSerialSupported,
   SimulatorConnection,
   WebSerialConnection,
   type ReaderConnection,
 } from "@/lib/readerConnection";
+import { Capacitor } from "@capacitor/core";
 
 const MAX_LOGS = 300;
 
-export type ConnectionKind = "webserial" | "simulator" | null;
+export type ConnectionKind = "webserial" | "simulator" | "capacitor" | null;
 
 /**
  * Owns the serial connection and derives `ReaderState` from the incoming line
@@ -26,11 +28,13 @@ export function useReader() {
   const [readerState, setReaderState] = useState<ReaderState>(initialReaderState);
   const [status, setStatus] = useState("Disconnected");
   const [connected, setConnected] = useState(false);
+  const [connecting, setConnecting] = useState(false);
   const [kind, setKind] = useState<ConnectionKind>(null);
   const [logs, setLogs] = useState<string[]>([]);
 
   const connRef = useRef<ReaderConnection | null>(null);
   const unsubsRef = useRef<Array<() => void>>([]);
+  const connectingRef = useRef<Promise<void> | null>(null);
 
   const pushLog = useCallback((entry: string) => {
     setLogs((prev) => {
@@ -63,21 +67,55 @@ export function useReader() {
     [pushLog],
   );
 
-  const connectWebSerial = useCallback(async () => {
-    const conn = new WebSerialConnection();
-    attach(conn);
-    setKind("webserial");
-    await conn.connect();
-    setConnected(conn.isConnected());
-  }, [attach]);
+  // Single-flight connect: concurrent calls (e.g. native auto-connect racing a
+  // manual tap) join the same in-flight promise instead of opening a second
+  // connection, and any previous connection is torn down before a new one is
+  // attached so listener handles and ports never leak.
+  const runConnect = useCallback(
+    (factory: () => ReaderConnection, kindName: Exclude<ConnectionKind, null>) => {
+      if (connRef.current?.isConnected()) return Promise.resolve();
+      if (connectingRef.current) return connectingRef.current;
+      const promise = (async () => {
+        setConnecting(true);
+        try {
+          const prev = connRef.current;
+          if (prev) {
+            try {
+              await prev.disconnect();
+            } catch {
+              /* ignore teardown errors on the old connection */
+            }
+          }
+          const conn = factory();
+          attach(conn);
+          setKind(kindName);
+          await conn.connect();
+          setConnected(conn.isConnected());
+        } finally {
+          connectingRef.current = null;
+          setConnecting(false);
+        }
+      })();
+      connectingRef.current = promise;
+      return promise;
+    },
+    [attach],
+  );
 
-  const connectSimulator = useCallback(async () => {
-    const conn = new SimulatorConnection();
-    attach(conn);
-    setKind("simulator");
-    await conn.connect();
-    setConnected(true);
-  }, [attach]);
+  const connectWebSerial = useCallback(
+    () => runConnect(() => new WebSerialConnection(), "webserial"),
+    [runConnect],
+  );
+
+  const connectNative = useCallback(
+    () => runConnect(() => new CapacitorSerialConnection(), "capacitor"),
+    [runConnect],
+  );
+
+  const connectSimulator = useCallback(
+    () => runConnect(() => new SimulatorConnection(), "simulator"),
+    [runConnect],
+  );
 
   const disconnect = useCallback(async () => {
     await connRef.current?.disconnect();
@@ -117,10 +155,13 @@ export function useReader() {
     readerState,
     status,
     connected,
+    connecting,
     kind,
     logs,
     webSerialSupported: isWebSerialSupported(),
+    isNativePlatform: Capacitor.isNativePlatform(),
     connectWebSerial,
+    connectNative,
     connectSimulator,
     disconnect,
     sendCommand,
