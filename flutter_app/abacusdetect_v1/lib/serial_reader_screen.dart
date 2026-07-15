@@ -232,7 +232,7 @@ class _SerialReaderScreenState extends State<SerialReaderScreen> {
         _status.toLowerCase().contains("open") ||
         _status.toLowerCase().contains("ready");
     final statusText = isConnected ? "USB" : _status;
-    final statusValue = battery != null && battery.isNotEmpty ? "$battery" : null;
+    final statusValue = battery.isNotEmpty ? battery : null;
 
     final buttonColor =
         _buttonPressed ? const Color(0xFF9B111E) : const Color(0xFFC1121F);
@@ -271,6 +271,15 @@ class _SerialReaderScreenState extends State<SerialReaderScreen> {
                 ),
               ),
               Positioned(
+                top: 8,
+                left: 12,
+                child: IconButton(
+                  onPressed: _showLogsSheet,
+                  icon: const Icon(Icons.terminal, color: Colors.white54),
+                  tooltip: 'UART logs',
+                ),
+              ),
+              Positioned(
                 left: 0,
                 right: 0,
                 bottom: 24,
@@ -291,8 +300,8 @@ class _SerialReaderScreenState extends State<SerialReaderScreen> {
                           shape: BoxShape.circle,
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.red.withOpacity(
-                                _buttonPressed ? 0.18 : 0.35,
+                              color: Colors.red.withValues(
+                                alpha: _buttonPressed ? 0.18 : 0.35,
                               ),
                               blurRadius: _buttonPressed ? 10 : 18,
                               spreadRadius: 1,

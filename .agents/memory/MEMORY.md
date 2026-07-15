@@ -1,2 +1,3 @@
 - [MicroNow reader integration](micronow-reader-integration.md) — serial-host protocol quirks: DISPLAYRESULT is the sole result-bearing screen, power-button handshake, and camera/Web-Serial blocked in the Replit preview.
 - [Android Capacitor packaging](android-capacitor-packaging.md) — packaged with Capacitor; APK builds only in Android Studio (no SDK in Replit); native USB is the 3rd ReaderConnection.
+- [Flutter app in this repl](flutter-project-in-repl.md) — separate Dart app in `flutter_app/abacusdetect_v1/`; Dart module exists but no Flutter SDK in Replit, so only `dart format` syntax-checks; analyze/build/run happen on the user's machine.
