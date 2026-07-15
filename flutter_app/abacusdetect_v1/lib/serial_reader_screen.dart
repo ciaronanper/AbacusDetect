@@ -15,8 +15,6 @@ class _SerialReaderScreenState extends State<SerialReaderScreen> {
   ReaderState _readerState = ReaderState.initial();
 
   String _status = "Disconnected";
-  String _bleState = "UNKNOWN";
-  String _deviceStatus = "UNKNOWN";
   final List<String> _logs = [];
 
   StreamSubscription? _lineSub;
@@ -158,39 +156,6 @@ class _SerialReaderScreenState extends State<SerialReaderScreen> {
   );
 }
 
-  Color _batteryColor(String battery) {
-    switch (battery) {
-      case "DEAD":
-        return Colors.redAccent;
-      case "LOW":
-        return Colors.orangeAccent;
-      case "MID":
-        return Colors.amberAccent;
-      case "HIGH_MID":
-      case "HIGH":
-        return Colors.lightGreenAccent;
-      default:
-        return Colors.white54;
-    }
-  }
-
-  IconData _batteryIcon(String battery) {
-    switch (battery) {
-      case "DEAD":
-        return Icons.battery_0_bar;
-      case "LOW":
-        return Icons.battery_2_bar;
-      case "MID":
-        return Icons.battery_4_bar;
-      case "HIGH_MID":
-        return Icons.battery_5_bar;
-      case "HIGH":
-        return Icons.battery_full;
-      default:
-        return Icons.battery_unknown;
-    }
-  }
-
   String _friendlyViewText(String view) {
     return ReaderProtocol.viewToDisplayText(view);
   }
@@ -223,10 +188,6 @@ class _SerialReaderScreenState extends State<SerialReaderScreen> {
     final resultText = _resultText();
     final displayText = resultText != "—" ? resultText : _friendlyViewText(view);
     final battery = _readerState.battery;
-
-    if (_readerState.currentView == "BLECONNECTED") {
-      _bleState = "CONNECTED";
-    }
 
     final isConnected = _status.toLowerCase().contains("connect") ||
         _status.toLowerCase().contains("open") ||
