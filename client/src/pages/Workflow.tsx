@@ -53,7 +53,6 @@ export default function Workflow() {
   const [patientId, setPatientId] = useState("");
   const [timeLeft, setTimeLeft] = useState(0);
   const [resultAt, setResultAt] = useState<Date | null>(null);
-  const [powerPressed, setPowerPressed] = useState(false);
   const [devOpen, setDevOpen] = useState(false);
 
   const { toast } = useToast();
@@ -75,11 +74,14 @@ export default function Workflow() {
     prevViewRef.current = view;
   }, [view, phase]);
 
+  // Keep the countdown running through CHECKING and any other post-sample
+  // screens until it reaches zero or DISPLAYRESULT arrives.
+  const timerActive = phase === "running" && timeLeft > 0;
   useEffect(() => {
-    if (!(phase === "running" && view === "SAMPLE_DETECTED")) return;
+    if (!timerActive) return;
     const id = setInterval(() => setTimeLeft((t) => (t > 0 ? t - 1 : 0)), 1000);
     return () => clearInterval(id);
-  }, [phase, view]);
+  }, [timerActive]);
 
   // --- Persist the result once the device displays it ----------------------
   useEffect(() => {
@@ -203,39 +205,15 @@ export default function Workflow() {
     setPhase("connect");
   };
 
-  // Power button: press/release mirror the firmware handshake (BUTTON / BUTTON_UP).
-  const powerDown = () => {
-    setPowerPressed(true);
-    reader.sendButtonDown();
-  };
-  const powerUp = () => {
-    setPowerPressed(false);
-    reader.sendButtonUp();
-  };
-
-  const PowerButton = () => (
-    <div className="flex flex-col items-center gap-2 pt-2">
-      <button
-        onPointerDown={powerDown}
-        onPointerUp={powerUp}
-        onPointerLeave={() => powerPressed && powerUp()}
-        onPointerCancel={powerUp}
-        aria-label="Power"
-        data-testid="button-power"
-        className={cn(
-          "w-20 h-20 rounded-full flex flex-col items-center justify-center text-white shadow-lg transition-transform select-none touch-none",
-          powerPressed ? "bg-red-700 scale-95" : "bg-red-600 hover:bg-red-500",
-        )}
-      >
-        <Power className="w-8 h-8" />
-        <span className="text-[9px] font-bold tracking-widest mt-0.5">POWER</span>
-      </button>
-    </div>
-  );
-
   // --- Device-driven screens ----------------------------------------------
+  // When the 5-min countdown is active, keep showing the Analysis in Progress
+  // screen even if the device moves into its CHECKING phase — only switch away
+  // once the countdown finishes or DISPLAYRESULT / an error arrives.
+  const effectiveView =
+    view === "CHECKING" && timerActive ? "SAMPLE_DETECTED" : view;
+
   const renderDeviceView = () => {
-    switch (view) {
+    switch (effectiveView) {
       case "INSERT_CARTRIDGE":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
@@ -245,7 +223,6 @@ export default function Workflow() {
               title="Insert Cartridge"
               description="Insert the SAA2 cartridge into the reader port"
             />
-            <PowerButton />
           </div>
         );
 
@@ -261,7 +238,6 @@ export default function Workflow() {
               description="Apply the sample drops to the cartridge well"
               status="warning"
             />
-            <PowerButton />
           </div>
         );
 
@@ -294,7 +270,6 @@ export default function Workflow() {
               description="Sample detected. Do not remove the cartridge."
               status="processing"
             />
-            <PowerButton />
           </div>
         );
 
@@ -305,7 +280,6 @@ export default function Workflow() {
               <Loader2 className="w-14 h-14 text-primary animate-spin" />
             </div>
             <StatusCard icon={Loader2} title="Checking…" description="The reader is working. Please wait." status="processing" />
-            <PowerButton />
           </div>
         );
 
@@ -332,7 +306,6 @@ export default function Workflow() {
             <ActionButton fullWidth onClick={newTest} data-testid="button-new-test-finished">
               New Test
             </ActionButton>
-            <PowerButton />
           </div>
         );
 
@@ -345,7 +318,6 @@ export default function Workflow() {
               description={readerState.errorText ? errorToDisplayText(readerState.errorText) : "The reader reported an error."}
               status="error"
             />
-            <PowerButton />
           </div>
         );
 
@@ -353,7 +325,6 @@ export default function Workflow() {
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
             <StatusCard icon={AlertTriangle} title="Barcode Invalid" description="The cartridge barcode could not be read." status="error" />
-            <PowerButton />
           </div>
         );
 
@@ -361,7 +332,6 @@ export default function Workflow() {
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
             <StatusCard icon={AlertTriangle} title="No Control Line" description="No control line detected. Please retest." status="error" />
-            <PowerButton />
           </div>
         );
 
@@ -369,7 +339,6 @@ export default function Workflow() {
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
             <StatusCard icon={Eye} title="Clean Lens" description="Please clean the reader lens and try again." status="warning" />
-            <PowerButton />
           </div>
         );
 
@@ -384,7 +353,6 @@ export default function Workflow() {
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
             <StatusCard icon={Moon} title="Wake Device" description="Waking the reader…" status="processing" />
-            <PowerButton />
           </div>
         );
 
@@ -405,15 +373,13 @@ export default function Workflow() {
               status="processing"
             />
             <PatientChips />
-            <PowerButton />
           </div>
         );
 
       default:
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
-            <StatusCard icon={Usb} title={viewToDisplayText(view)} description="Follow the prompts on the reader." />
-            <PowerButton />
+            <StatusCard icon={Usb} title={viewToDisplayText(effectiveView)} description="Follow the prompts on the reader." />
           </div>
         );
     }
@@ -448,7 +414,6 @@ export default function Workflow() {
           <ActionButton fullWidth onClick={newTest} data-testid="button-new-test">
             New Test
           </ActionButton>
-          <PowerButton />
         </div>
       );
     }
@@ -630,7 +595,7 @@ export default function Workflow() {
       <main className="flex-1 px-6 pt-20 pb-8 safe-area-pb overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${phase}-${phase === "running" ? view : ""}`}
+            key={`${phase}-${phase === "running" ? effectiveView : ""}`}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
