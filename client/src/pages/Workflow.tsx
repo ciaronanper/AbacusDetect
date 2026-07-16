@@ -487,10 +487,10 @@ export default function Workflow() {
               </div>
               <div className="mt-9 rounded-lg border border-gray-200 overflow-hidden">
                 <div className="flex h-5">
-                  <div className="bg-green-600" style={{ width: "20%" }} />
-                  <div className="bg-green-300" style={{ width: "20%" }} />
-                  <div className="bg-orange-400" style={{ width: "20%" }} />
-                  <div className="bg-orange-600" style={{ width: "20%" }} />
+                  <div className="bg-green-800" style={{ width: "20%" }} />
+                  <div className="bg-green-400" style={{ width: "20%" }} />
+                  <div className="bg-yellow-400" style={{ width: "20%" }} />
+                  <div className="bg-orange-500" style={{ width: "20%" }} />
                   <div className="bg-red-500" style={{ width: "20%" }} />
                 </div>
               </div>
@@ -503,7 +503,7 @@ export default function Workflow() {
                 ">200 mg/L",
                 ">300 mg/L",
               ].map((label) => (
-                <div key={label} className="flex-1 text-center text-[9px] leading-tight text-muted-foreground px-0.5 break-words">
+                <div key={label} className="flex-1 text-center text-[9px] leading-tight font-bold text-foreground px-0.5 break-words">
                   {label}
                 </div>
               ))}
