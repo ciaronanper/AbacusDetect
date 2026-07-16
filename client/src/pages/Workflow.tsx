@@ -108,11 +108,6 @@ export default function Workflow() {
       {
         onError: () => {
           savedRef.current = false;
-          toast({
-            title: "Save failed",
-            description: "Could not save the result to the health record.",
-            variant: "destructive",
-          });
         },
       },
     );
