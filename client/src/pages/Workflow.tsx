@@ -469,24 +469,17 @@ export default function Workflow() {
             </span>
           </div>
 
-          <div className={cn("p-4 rounded-xl border-2 text-center", band.bg, band.border)} data-testid="card-saa2-level">
-            <span className="text-xs font-bold uppercase opacity-60 block">SAA2 Level</span>
-            <p className={cn("text-3xl font-bold mt-1 tabular-nums", band.textColor)} data-testid="text-saa2-value">
-              {value} <span className="text-base font-normal">{units}</span>
-            </p>
-          </div>
-
-          <div className="bg-card border border-border rounded-xl p-4 shadow-sm" data-testid="card-severity-gauge">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">SAA2 Range</span>
-              <span className={cn("text-xs font-bold px-2 py-0.5 rounded text-white", band.badgeColor)}>{band.zone}</span>
+          <div className="bg-card border border-border rounded-xl p-5 shadow-sm" data-testid="card-severity-gauge">
+            <div className="flex items-center justify-between mb-5">
+              <span className="text-sm font-bold text-foreground uppercase tracking-wider">SAA2 Range</span>
+              <span className={cn("text-sm font-bold px-3 py-1 rounded-full text-white", band.badgeColor)}>{band.zone}</span>
             </div>
             <div className="relative px-1">
               <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
-                <div className="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[14px] border-t-gray-600" />
+                <div className="w-0 h-0 border-l-[14px] border-l-transparent border-r-[14px] border-r-transparent border-t-[18px] border-t-gray-700" />
               </div>
-              <div className="mt-9 rounded-lg border border-gray-200 overflow-hidden">
-                <div className="flex h-5">
+              <div className="mt-10 rounded-xl border-2 border-gray-200 overflow-hidden">
+                <div className="flex h-10">
                   <div className="bg-green-800" style={{ width: "20%" }} />
                   <div className="bg-green-400" style={{ width: "20%" }} />
                   <div className="bg-yellow-400" style={{ width: "20%" }} />
@@ -495,7 +488,7 @@ export default function Workflow() {
                 </div>
               </div>
             </div>
-            <div className="flex mt-2">
+            <div className="flex mt-3">
               {[
                 "<10 mg/L",
                 "<50 mg/L",
@@ -503,19 +496,12 @@ export default function Workflow() {
                 ">200 mg/L",
                 ">300 mg/L",
               ].map((label) => (
-                <div key={label} className="flex-1 text-center text-[9px] leading-tight font-bold text-foreground px-0.5 break-words">
+                <div key={label} className="flex-1 text-center text-[10px] leading-tight font-bold text-foreground px-0.5 break-words">
                   {label}
                 </div>
               ))}
             </div>
           </div>
-
-          {savedRef.current && (
-            <div className="flex items-center justify-center gap-2 text-sm text-green-600 font-medium" data-testid="text-saved">
-              <CheckCircle2 className="w-4 h-4" />
-              Saved to health record
-            </div>
-          )}
 
           <ActionButton fullWidth onClick={newTest} data-testid="button-new-test">
             New Test
