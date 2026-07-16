@@ -170,7 +170,7 @@ export default function Workflow() {
         description: reader.isNativePlatform
           ? "Plug the reader into the phone and allow USB access when prompted, then try again."
           : reader.webSerialSupported
-          ? "No reader detected over USB. Connect the MicroNow reader to this computer, or use the Android app with the reader plugged into the phone. Or tap \u201CUse Simulator\u201D to preview the flow."
+          ? "No reader detected over USB. Connect the AbacusDetect reader to this computer, or use the Android app with the reader plugged into the phone. Or tap \u201CUse Simulator\u201D to preview the flow."
           : "USB serial needs desktop Chrome/Edge or the packaged Android app. Tap \u201CUse Simulator\u201D to preview the flow.",
         variant: "destructive",
       });
@@ -487,25 +487,25 @@ export default function Workflow() {
               </div>
               <div className="mt-9 rounded-lg border border-gray-200 overflow-hidden">
                 <div className="flex h-5">
-                  <div className="bg-green-800" style={{ width: "20%" }} />
-                  <div className="bg-green-400" style={{ width: "20%" }} />
-                  <div className="bg-yellow-400" style={{ width: "20%" }} />
+                  <div className="bg-green-600" style={{ width: "20%" }} />
+                  <div className="bg-green-300" style={{ width: "20%" }} />
                   <div className="bg-orange-400" style={{ width: "20%" }} />
+                  <div className="bg-orange-600" style={{ width: "20%" }} />
                   <div className="bg-red-500" style={{ width: "20%" }} />
                 </div>
               </div>
             </div>
-            <div className="relative h-5 mt-1">
+            <div className="flex mt-2">
               {[
-                { label: "0", pct: 0 },
-                { label: "10", pct: 20 },
-                { label: "50", pct: 40 },
-                { label: "200", pct: 60 },
-                { label: "300+", pct: 80 },
-              ].map(({ label, pct }) => (
-                <span key={label} className="absolute text-xs text-muted-foreground" style={{ left: `${pct}%`, transform: pct === 0 ? "none" : "translateX(-50%)" }}>
+                "<10 mg/L",
+                "<50 mg/L",
+                "50–200 mg/L",
+                ">200 mg/L",
+                ">300 mg/L",
+              ].map((label) => (
+                <div key={label} className="flex-1 text-center text-[9px] leading-tight text-muted-foreground px-0.5 break-words">
                   {label}
-                </span>
+                </div>
               ))}
             </div>
           </div>
@@ -534,7 +534,7 @@ export default function Workflow() {
             <img src={logoPng} alt="Abacus Labs" className="h-36 w-auto mx-auto object-contain" />
             <div className="text-center space-y-1">
               <h2 className="text-xl font-display font-bold">Connect Reader</h2>
-              <p className="text-sm text-muted-foreground">Plug in the MicroNow reader over USB to begin.</p>
+              <p className="text-sm text-muted-foreground">Plug in the AbacusDetect reader over USB to begin.</p>
             </div>
             <div className="w-full space-y-3">
               <ActionButton fullWidth onClick={connectUsb} disabled={reader.connecting} data-testid="button-connect-usb">
