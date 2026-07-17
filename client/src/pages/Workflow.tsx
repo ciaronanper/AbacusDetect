@@ -54,6 +54,10 @@ export default function Workflow() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [resultAt, setResultAt] = useState<Date | null>(null);
   const [devOpen, setDevOpen] = useState(false);
+  // Once the reader sends DISPLAYRESULT we lock the result screen here so any
+  // subsequent reader messages (e.g. SCREEN:HOME after the test completes) do
+  // not replace the result view. Cleared only when the nurse taps "New Test".
+  const [resultLocked, setResultLocked] = useState(false);
 
   const { toast } = useToast();
   const createResult = useCreateResult();
@@ -82,6 +86,16 @@ export default function Workflow() {
     const id = setInterval(() => setTimeLeft((t) => (t > 0 ? t - 1 : 0)), 1000);
     return () => clearInterval(id);
   }, [timerActive]);
+
+  // --- Lock the result screen once DISPLAYRESULT arrives -------------------
+  // The reader often sends SCREEN:HOME or other messages immediately after
+  // showing the result. Without this lock those messages would replace the
+  // result screen before the nurse has a chance to read it.
+  useEffect(() => {
+    if (phase === "running" && view === "DISPLAYRESULT" && readerState.resultText) {
+      setResultLocked(true);
+    }
+  }, [phase, view, readerState.resultText]);
 
   // --- Persist the result once the device displays it ----------------------
   useEffect(() => {
@@ -180,11 +194,15 @@ export default function Workflow() {
   const newTest = () => {
     savedRef.current = false;
     simPlayedRef.current = false;
+    setResultLocked(false);
     setNurseId("");
     setPatientId("");
     setTimeLeft(0);
     setResultAt(null);
     reader.resetReaderState();
+    // After a completed test the reader stays connected — always go straight
+    // back to nurse QR scan to begin the next test. Only fall back to the
+    // connect screen if the reader has been unplugged.
     setPhase(reader.connected ? "nurse-scan" : "connect");
   };
 
@@ -192,6 +210,7 @@ export default function Workflow() {
     await reader.disconnect();
     savedRef.current = false;
     simPlayedRef.current = false;
+    setResultLocked(false);
     setNurseId("");
     setPatientId("");
     setTimeLeft(0);
@@ -201,11 +220,16 @@ export default function Workflow() {
   };
 
   // --- Device-driven screens ----------------------------------------------
-  // When the 5-min countdown is active, keep showing the Analysis in Progress
-  // screen even if the device moves into its CHECKING phase — only switch away
-  // once the countdown finishes or DISPLAYRESULT / an error arrives.
-  const effectiveView =
-    view === "CHECKING" && timerActive ? "SAMPLE_DETECTED" : view;
+  // Priority 1: once DISPLAYRESULT has been received, hold that screen until
+  //   the nurse explicitly taps "New Test". Any subsequent reader messages
+  //   (e.g. SCREEN:HOME after the assay completes) are ignored for display.
+  // Priority 2: while the 5-min countdown is active, keep showing
+  //   "Analysis in Progress" even if the reader moves to CHECKING.
+  const effectiveView = resultLocked
+    ? "DISPLAYRESULT"
+    : view === "CHECKING" && timerActive
+    ? "SAMPLE_DETECTED"
+    : view;
 
   const renderDeviceView = () => {
     switch (effectiveView) {

@@ -13,6 +13,14 @@ interface QrScannerProps {
  * grabbed from the video element and decoded with jsQR each animation frame.
  * If the camera is unavailable (permissions, no device, sandboxed preview) it
  * falls back to manual entry.
+ *
+ * Camera selection strategy (multi-camera phones like Samsung Galaxy S22):
+ *  1. Open any environment-facing stream to grant permission (labels unlock).
+ *  2. Enumerate all cameras. Prefer back-facing cameras whose label does NOT
+ *     contain "wide" or "ultra" — those are the ultra-wide (0.5×) sensors.
+ *  3. Among remaining back cameras, if capabilities are available also skip any
+ *     whose zoom.min < 0.9 (another ultra-wide indicator).
+ *  4. Apply 3× digital zoom on the chosen camera.
  */
 export function QrScanner({ label, onScan }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -79,76 +87,105 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
       rafRef.current = requestAnimationFrame(tick);
     };
 
+    /** Returns true if this camera label looks like an ultra-wide lens. */
+    const isUltraWideLabel = (lbl: string) => {
+      const l = lbl.toLowerCase();
+      return l.includes("wide") || l.includes("ultra") || l.includes("0.5x") || l.includes("0.5 x");
+    };
+
+    /** Returns true if getCapabilities() indicates ultra-wide (zoom.min < 0.9). */
+    const isUltraWideCaps = (track: MediaStreamTrack): boolean => {
+      try {
+        const caps = (track.getCapabilities as any)?.() as any;
+        return caps?.zoom?.min != null && caps.zoom.min < 0.9;
+      } catch {
+        return false;
+      }
+    };
+
     async function start() {
       try {
-        // Initial stream — grants camera permission and unlocks device labels.
+        // Step 1 — open any back-facing camera to grant permission.
+        // After this call, enumerateDevices() returns real labels.
         let stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" } },
           audio: false,
         });
 
-        // Component unmounted (or scan finished) while awaiting permission.
         if (cancelled || doneRef.current) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
 
-        // On multi-camera phones (e.g. Samsung Galaxy) the browser often picks
-        // the ultra-wide (0.5×) lens first. Ultra-wide cameras expose a
-        // zoom.min < 1 in their capabilities; the main sensor starts at 1.
-        // If we detect we're on the ultra-wide, enumerate all cameras and swap
-        // to the first back-facing one whose zoom.min ≥ 1 (the main lens).
+        // Step 2 — enumerate cameras and look for the main (non-wide) sensor.
         try {
-          const firstTrack = stream.getVideoTracks()[0];
-          const caps = (firstTrack?.getCapabilities as any)?.() as any;
-          const onUltraWide = caps?.zoom?.min != null && caps.zoom.min < 0.9;
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter((d) => d.kind === "videoinput");
 
-          if (onUltraWide) {
-            const currentId = firstTrack?.getSettings().deviceId;
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const videoDevices = devices.filter((d) => d.kind === "videoinput");
+          // Separate into candidates: those whose label suggests main/tele,
+          // and the rest (no label, or unknown).
+          const definitelyNotWide = videoDevices.filter(
+            (d) => d.label && !isUltraWideLabel(d.label),
+          );
+          const unlabelled = videoDevices.filter((d) => !d.label);
+          const candidateList = definitelyNotWide.length
+            ? definitelyNotWide
+            : unlabelled;
 
-            for (const device of videoDevices) {
-              if (device.deviceId === currentId) continue;
-              try {
-                const candidate = await navigator.mediaDevices.getUserMedia({
-                  video: { deviceId: { exact: device.deviceId } },
-                  audio: false,
-                });
-                const cTrack = candidate.getVideoTracks()[0];
-                const cCaps = (cTrack?.getCapabilities as any)?.() as any;
-                const cSettings = cTrack?.getSettings();
-                // Accept back-facing cameras with zoom.min ≥ 1 (main sensor)
-                const isMainBack =
-                  cSettings?.facingMode === "environment" &&
-                  cCaps?.zoom?.min != null &&
-                  cCaps.zoom.min >= 0.9;
-                if (isMainBack) {
-                  stream.getTracks().forEach((t) => t.stop());
-                  stream = candidate;
-                  break;
-                } else {
-                  candidate.getTracks().forEach((t) => t.stop());
-                }
-              } catch {
-                // this device couldn't be opened — skip
+          // Current stream's deviceId so we can skip it if we already have it.
+          const currentId = stream.getVideoTracks()[0]?.getSettings().deviceId;
+
+          for (const device of candidateList) {
+            if (!device.deviceId) continue;
+            try {
+              const candidate = await navigator.mediaDevices.getUserMedia({
+                video: { deviceId: { exact: device.deviceId } },
+                audio: false,
+              });
+              const cTrack = candidate.getVideoTracks()[0];
+              const settings = cTrack?.getSettings();
+
+              // Must be back-facing.
+              if (settings?.facingMode !== "environment") {
+                candidate.getTracks().forEach((t) => t.stop());
+                continue;
               }
+
+              // Skip if capability check still says ultra-wide.
+              if (isUltraWideCaps(cTrack)) {
+                candidate.getTracks().forEach((t) => t.stop());
+                continue;
+              }
+
+              // If this is the same camera we already have, keep the existing
+              // stream (avoids an unnecessary teardown + reopen).
+              if (settings?.deviceId === currentId) {
+                candidate.getTracks().forEach((t) => t.stop());
+                break;
+              }
+
+              // We found a better camera — switch to it.
+              stream.getTracks().forEach((t) => t.stop());
+              stream = candidate;
+              break;
+            } catch {
+              // This device couldn't be opened — try the next one.
             }
           }
         } catch {
-          // capability check failed — continue with original stream
+          // Enumeration failed — continue with the initial stream.
         }
 
-        // Apply 3× zoom on whichever camera we ended up with.
+        // Step 3 — apply 3× zoom on whichever camera we ended up with.
         try {
           const track = stream.getVideoTracks()[0];
           const caps = (track?.getCapabilities as any)?.() as any;
           if (caps?.zoom) {
             const target = Math.min(3, caps.zoom.max ?? 3);
-            await track.applyConstraints({ advanced: [{ zoom: target } as any] });
+            await (track as any).applyConstraints({ advanced: [{ zoom: target }] });
           }
         } catch {
-          // zoom API not available — continue without it
+          // Zoom API not available — continue without it.
         }
 
         if (cancelled || doneRef.current) {
