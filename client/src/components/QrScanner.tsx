@@ -81,30 +81,79 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
 
     async function start() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
+        // Initial stream — grants camera permission and unlocks device labels.
+        let stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" } },
           audio: false,
         });
+
         // Component unmounted (or scan finished) while awaiting permission.
         if (cancelled || doneRef.current) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
 
-        // Apply 3× zoom on the main rear camera. This also avoids the
-        // ultra-wide (0.5×) lens — any zoom > 1 forces the main sensor.
-        const track = stream.getVideoTracks()[0];
-        if (track) {
-          try {
-            const capabilities = (track.getCapabilities as any)?.() as any;
-            if (capabilities?.zoom) {
-              const max = capabilities.zoom.max ?? 1;
-              const target = Math.min(3, max);
-              await track.applyConstraints({ advanced: [{ zoom: target } as any] });
+        // On multi-camera phones (e.g. Samsung Galaxy) the browser often picks
+        // the ultra-wide (0.5×) lens first. Ultra-wide cameras expose a
+        // zoom.min < 1 in their capabilities; the main sensor starts at 1.
+        // If we detect we're on the ultra-wide, enumerate all cameras and swap
+        // to the first back-facing one whose zoom.min ≥ 1 (the main lens).
+        try {
+          const firstTrack = stream.getVideoTracks()[0];
+          const caps = (firstTrack?.getCapabilities as any)?.() as any;
+          const onUltraWide = caps?.zoom?.min != null && caps.zoom.min < 0.9;
+
+          if (onUltraWide) {
+            const currentId = firstTrack?.getSettings().deviceId;
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter((d) => d.kind === "videoinput");
+
+            for (const device of videoDevices) {
+              if (device.deviceId === currentId) continue;
+              try {
+                const candidate = await navigator.mediaDevices.getUserMedia({
+                  video: { deviceId: { exact: device.deviceId } },
+                  audio: false,
+                });
+                const cTrack = candidate.getVideoTracks()[0];
+                const cCaps = (cTrack?.getCapabilities as any)?.() as any;
+                const cSettings = cTrack?.getSettings();
+                // Accept back-facing cameras with zoom.min ≥ 1 (main sensor)
+                const isMainBack =
+                  cSettings?.facingMode === "environment" &&
+                  cCaps?.zoom?.min != null &&
+                  cCaps.zoom.min >= 0.9;
+                if (isMainBack) {
+                  stream.getTracks().forEach((t) => t.stop());
+                  stream = candidate;
+                  break;
+                } else {
+                  candidate.getTracks().forEach((t) => t.stop());
+                }
+              } catch {
+                // this device couldn't be opened — skip
+              }
             }
-          } catch {
-            // zoom not supported on this device — continue without it
           }
+        } catch {
+          // capability check failed — continue with original stream
+        }
+
+        // Apply 3× zoom on whichever camera we ended up with.
+        try {
+          const track = stream.getVideoTracks()[0];
+          const caps = (track?.getCapabilities as any)?.() as any;
+          if (caps?.zoom) {
+            const target = Math.min(3, caps.zoom.max ?? 3);
+            await track.applyConstraints({ advanced: [{ zoom: target } as any] });
+          }
+        } catch {
+          // zoom API not available — continue without it
+        }
+
+        if (cancelled || doneRef.current) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
         }
 
         streamRef.current = stream;
