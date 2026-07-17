@@ -90,6 +90,23 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
           stream.getTracks().forEach((t) => t.stop());
           return;
         }
+
+        // Apply 3× zoom on the main rear camera. This also avoids the
+        // ultra-wide (0.5×) lens — any zoom > 1 forces the main sensor.
+        const track = stream.getVideoTracks()[0];
+        if (track) {
+          try {
+            const capabilities = (track.getCapabilities as any)?.() as any;
+            if (capabilities?.zoom) {
+              const max = capabilities.zoom.max ?? 1;
+              const target = Math.min(3, max);
+              await track.applyConstraints({ advanced: [{ zoom: target } as any] });
+            }
+          } catch {
+            // zoom not supported on this device — continue without it
+          }
+        }
+
         streamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
