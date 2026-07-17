@@ -58,6 +58,10 @@ export default function Workflow() {
   // subsequent reader messages (e.g. SCREEN:HOME after the test completes) do
   // not replace the result view. Cleared only when the nurse taps "New Test".
   const [resultLocked, setResultLocked] = useState(false);
+  // Snapshot of the result text captured the moment DISPLAYRESULT first
+  // arrives. Kept here so renderResult() still has the value even after the
+  // reader moves on and clears readerState.resultText.
+  const [snapshotResultText, setSnapshotResultText] = useState<string | null>(null);
 
   const { toast } = useToast();
   const createResult = useCreateResult();
@@ -88,11 +92,12 @@ export default function Workflow() {
   }, [timerActive]);
 
   // --- Lock the result screen once DISPLAYRESULT arrives -------------------
-  // The reader often sends SCREEN:HOME or other messages immediately after
-  // showing the result. Without this lock those messages would replace the
-  // result screen before the nurse has a chance to read it.
+  // Snapshot the result text immediately so it survives reader state changes
+  // (the reader clears resultText when it moves to the next screen).
+  // effectiveView stays pinned to DISPLAYRESULT until "New Test" is tapped.
   useEffect(() => {
     if (phase === "running" && view === "DISPLAYRESULT" && readerState.resultText) {
+      setSnapshotResultText(readerState.resultText);
       setResultLocked(true);
     }
   }, [phase, view, readerState.resultText]);
@@ -195,6 +200,7 @@ export default function Workflow() {
     savedRef.current = false;
     simPlayedRef.current = false;
     setResultLocked(false);
+    setSnapshotResultText(null);
     setNurseId("");
     setPatientId("");
     setTimeLeft(0);
@@ -211,6 +217,7 @@ export default function Workflow() {
     savedRef.current = false;
     simPlayedRef.current = false;
     setResultLocked(false);
+    setSnapshotResultText(null);
     setNurseId("");
     setPatientId("");
     setTimeLeft(0);
@@ -418,7 +425,9 @@ export default function Workflow() {
   );
 
   const renderResult = () => {
-    const parsed = parseResult(readerState.resultText);
+    // Use the snapshotted text — readerState.resultText may already be cleared
+    // if the reader has moved on to its next screen (INSERT_CARTRIDGE, HOME…).
+    const parsed = parseResult(snapshotResultText ?? readerState.resultText);
     // Never fabricate a clinical value: if the reader did not send a valid
     // numeric result, show a safe "unavailable" state instead of a 0 band.
     if (parsed.value == null) {
