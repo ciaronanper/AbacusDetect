@@ -30,7 +30,6 @@ import { cn } from "@/lib/utils";
 import {
   parseResult,
   classifyValue,
-  viewToDisplayText,
   errorToDisplayText,
 } from "@/lib/readerProtocol";
 import logoPng from "@assets/Vertical_logo_bgtransparent_1769613129480.png";
@@ -240,18 +239,6 @@ export default function Workflow() {
 
   const renderDeviceView = () => {
     switch (effectiveView) {
-      case "INSERT_CARTRIDGE":
-        return (
-          <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
-            <img src={logoPng} alt="Abacus Labs" className="h-28 w-auto mx-auto object-contain" />
-            <StatusCard
-              icon={TestTube2}
-              title="Insert Cartridge"
-              description="Insert the SAA2 cartridge into the reader port"
-            />
-          </div>
-        );
-
       case "APPLY_DROPS":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
@@ -382,30 +369,21 @@ export default function Workflow() {
           </div>
         );
 
+      case "INSERT_CARTRIDGE":
       case "WAITING":
+      default:
+        // The reader is not smart — if the app hasn't received a recognisable
+        // screen yet (startup, WAITING, or any unknown message), always show
+        // the first assay step instead of a vague "follow the reader" screen.
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
-            <div className="w-28 h-28 bg-secondary/60 rounded-full flex items-center justify-center">
-              <Usb className="w-14 h-14 text-muted-foreground" />
-            </div>
+            <img src={logoPng} alt="Abacus Labs" className="h-28 w-auto mx-auto object-contain" />
             <StatusCard
-              icon={Usb}
-              title={reader.kind === "simulator" ? "Simulating Reader\u2026" : "Waiting for Reader"}
-              description={
-                reader.kind === "simulator"
-                  ? "Running a demo of the reader flow \u2014 the screens advance automatically."
-                  : "Follow the prompts on the reader. This screen will update automatically."
-              }
-              status="processing"
+              icon={TestTube2}
+              title="Insert Cartridge"
+              description="Insert the SAA2 cartridge into the reader port"
             />
             <PatientChips />
-          </div>
-        );
-
-      default:
-        return (
-          <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
-            <StatusCard icon={Usb} title={viewToDisplayText(effectiveView)} description="Follow the prompts on the reader." />
           </div>
         );
     }
