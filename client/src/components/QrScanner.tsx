@@ -8,19 +8,121 @@ interface QrScannerProps {
   onScan: (text: string) => void;
 }
 
+// --- Camera-selection helpers ------------------------------------------------
+// Goal: on multi-lens phones (Samsung Galaxy S22 etc.) always use the MAIN back
+// camera — never the 0.5× ultra-wide. Strategy:
+//   1. Open any back camera once purely to unlock permission + device labels.
+//   2. Rank all cameras WITHOUT opening them, using InputDeviceInfo
+//      capabilities: main sensor has the highest max resolution (S22: 50 MP vs
+//      12 MP ultra-wide), labels containing "wide/ultra" are demoted, and the
+//      lowest Android camera index ("camera2 0, facing back") wins ties — on
+//      virtually every Android phone camera 0 is the main back camera.
+//   3. CRITICAL: stop the current stream BEFORE opening a candidate. Android
+//      cannot open two cameras at once — probing while the first stream was
+//      live is why earlier attempts silently stayed on the ultra-wide.
+//   4. Apply 3× zoom when the zoom API exists; otherwise stay at the main
+//      camera's native 1×.
+
+const VIDEO_BASE: MediaTrackConstraints = {
+  width: { ideal: 1920 },
+  height: { ideal: 1080 },
+};
+
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Parse the Android camera index from labels like "camera2 2, facing back". */
+const parseCameraIndex = (label: string): number => {
+  const m = label.match(/camera2?\s*(\d+)/i);
+  return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER;
+};
+
+const looksUltraWide = (label: string) => /ultra|wide|0[.,]5\s*x/i.test(label);
+
+const looksFrontFacing = (label: string, caps: any) => {
+  if (Array.isArray(caps?.facingMode) && caps.facingMode.includes("user")) return true;
+  return /front|user|selfie/i.test(label);
+};
+
+const looksBackFacing = (label: string, caps: any) => {
+  if (Array.isArray(caps?.facingMode) && caps.facingMode.includes("environment")) return true;
+  return /back|rear|environment/i.test(label);
+};
+
+interface RankedCamera {
+  deviceId: string;
+  label: string;
+  index: number;
+  megapixels: number;
+  wide: boolean;
+}
+
+/** Rank candidate back cameras best-first without opening any of them. */
+const rankBackCameras = (devices: MediaDeviceInfo[]): RankedCamera[] => {
+  const cams = devices
+    .filter((d) => d.kind === "videoinput")
+    .map((d) => {
+      let caps: any = {};
+      try {
+        caps = (d as any).getCapabilities?.() ?? {};
+      } catch {
+        /* not supported — rank on label alone */
+      }
+      const label = d.label || "";
+      return {
+        deviceId: d.deviceId,
+        label,
+        index: parseCameraIndex(label),
+        megapixels: (caps?.width?.max ?? 0) * (caps?.height?.max ?? 0),
+        wide: looksUltraWide(label),
+        back: looksBackFacing(label, caps),
+        front: looksFrontFacing(label, caps),
+      };
+    })
+    .filter((c) => !c.front);
+
+  const back = cams.filter((c) => c.back);
+  const pool = back.length ? back : cams;
+
+  return pool.sort((a, b) => {
+    if (a.wide !== b.wide) return a.wide ? 1 : -1; // non-wide lenses first
+    if (a.megapixels !== b.megapixels) return b.megapixels - a.megapixels; // main sensor = highest res
+    return a.index - b.index; // camera 0 = main back camera on Android
+  });
+};
+
+/** Ultra-wide check on a LIVE track (zoom.min < 1 or a tell-tale label). */
+const trackIsUltraWide = (track: MediaStreamTrack | undefined): boolean => {
+  if (!track) return false;
+  try {
+    const caps = (track.getCapabilities as any)?.() as any;
+    if (caps?.zoom?.min != null && caps.zoom.min < 0.9) return true;
+  } catch {
+    /* capabilities unavailable */
+  }
+  return looksUltraWide(track.label || "");
+};
+
+/** Open a specific camera, retrying — Android needs time to release the previous one. */
+const openCamera = async (deviceId: string): Promise<MediaStream | null> => {
+  for (const delay of [0, 250, 600]) {
+    if (delay) await sleep(delay);
+    try {
+      return await navigator.mediaDevices.getUserMedia({
+        video: { ...VIDEO_BASE, deviceId: { exact: deviceId } },
+        audio: false,
+      });
+    } catch {
+      /* camera busy or blocked — retry after a pause */
+    }
+  }
+  return null;
+};
+
 /**
- * Real QR scanning using the device's rear ("environment") camera. Frames are
- * grabbed from the video element and decoded with jsQR each animation frame.
- * If the camera is unavailable (permissions, no device, sandboxed preview) it
- * falls back to manual entry.
- *
- * Camera selection strategy (multi-camera phones like Samsung Galaxy S22):
- *  1. Open any environment-facing stream to grant permission (labels unlock).
- *  2. Enumerate all cameras. Prefer back-facing cameras whose label does NOT
- *     contain "wide" or "ultra" — those are the ultra-wide (0.5×) sensors.
- *  3. Among remaining back cameras, if capabilities are available also skip any
- *     whose zoom.min < 0.9 (another ultra-wide indicator).
- *  4. Apply 3× digital zoom on the chosen camera.
+ * Real QR scanning using the device's main rear camera. Frames are grabbed
+ * from the video element and decoded with jsQR each animation frame. If the
+ * camera is unavailable (permissions, no device, sandboxed preview) it falls
+ * back to manual entry.
  */
 export function QrScanner({ label, onScan }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -39,6 +141,8 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [manual, setManual] = useState(false);
   const [manualValue, setManualValue] = useState("");
+  // Shown under the scanning label so it's verifiable WHICH lens is active.
+  const [cameraLabel, setCameraLabel] = useState<string | null>(null);
 
   /** Stop the RAF loop and release the camera. Safe to call multiple times. */
   const stopCamera = useCallback(() => {
@@ -87,28 +191,13 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
       rafRef.current = requestAnimationFrame(tick);
     };
 
-    /** Returns true if this camera label looks like an ultra-wide lens. */
-    const isUltraWideLabel = (lbl: string) => {
-      const l = lbl.toLowerCase();
-      return l.includes("wide") || l.includes("ultra") || l.includes("0.5x") || l.includes("0.5 x");
-    };
-
-    /** Returns true if getCapabilities() indicates ultra-wide (zoom.min < 0.9). */
-    const isUltraWideCaps = (track: MediaStreamTrack): boolean => {
-      try {
-        const caps = (track.getCapabilities as any)?.() as any;
-        return caps?.zoom?.min != null && caps.zoom.min < 0.9;
-      } catch {
-        return false;
-      }
-    };
-
     async function start() {
       try {
-        // Step 1 — open any back-facing camera to grant permission.
-        // After this call, enumerateDevices() returns real labels.
-        let stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
+        // Step 1 — open any environment camera to unlock permission + labels.
+        // On Samsung phones this often lands on the 0.5× ultra-wide, which is
+        // exactly why we re-select explicitly below instead of trusting it.
+        let stream: MediaStream | null = await navigator.mediaDevices.getUserMedia({
+          video: { ...VIDEO_BASE, facingMode: { ideal: "environment" } },
           audio: false,
         });
 
@@ -117,75 +206,69 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
           return;
         }
 
-        // Step 2 — enumerate cameras and look for the main (non-wide) sensor.
+        // Step 2 — rank cameras (no opens needed) and switch if a better one exists.
         try {
           const devices = await navigator.mediaDevices.enumerateDevices();
-          const videoDevices = devices.filter((d) => d.kind === "videoinput");
+          const ranked = rankBackCameras(devices);
+          const currentTrack = stream.getVideoTracks()[0];
+          const currentId = currentTrack?.getSettings().deviceId;
+          const currentIsBest =
+            ranked.length > 0 && ranked[0].deviceId === currentId;
 
-          // Separate into candidates: those whose label suggests main/tele,
-          // and the rest (no label, or unknown).
-          const definitelyNotWide = videoDevices.filter(
-            (d) => d.label && !isUltraWideLabel(d.label),
-          );
-          const unlabelled = videoDevices.filter((d) => !d.label);
-          const candidateList = definitelyNotWide.length
-            ? definitelyNotWide
-            : unlabelled;
+          if (ranked.length && (!currentIsBest || trackIsUltraWide(currentTrack))) {
+            // Release the current camera BEFORE opening another — Android
+            // cannot hold two cameras open and would reject every candidate.
+            stream.getTracks().forEach((t) => t.stop());
+            stream = null;
 
-          // Current stream's deviceId so we can skip it if we already have it.
-          const currentId = stream.getVideoTracks()[0]?.getSettings().deviceId;
+            for (const cand of ranked) {
+              if (cancelled || doneRef.current) return;
+              if (!cand.deviceId) continue;
 
-          for (const device of candidateList) {
-            if (!device.deviceId) continue;
-            try {
-              const candidate = await navigator.mediaDevices.getUserMedia({
-                video: { deviceId: { exact: device.deviceId } },
-                audio: false,
-              });
-              const cTrack = candidate.getVideoTracks()[0];
-              const settings = cTrack?.getSettings();
+              const candidateStream = await openCamera(cand.deviceId);
+              if (!candidateStream) continue;
 
-              // Must be back-facing.
-              if (settings?.facingMode !== "environment") {
-                candidate.getTracks().forEach((t) => t.stop());
+              if (cancelled || doneRef.current) {
+                candidateStream.getTracks().forEach((t) => t.stop());
+                return;
+              }
+
+              const t = candidateStream.getVideoTracks()[0];
+              if (trackIsUltraWide(t)) {
+                candidateStream.getTracks().forEach((tr) => tr.stop());
+                await sleep(150); // let the HAL release before the next open
                 continue;
               }
 
-              // Skip if capability check still says ultra-wide.
-              if (isUltraWideCaps(cTrack)) {
-                candidate.getTracks().forEach((t) => t.stop());
-                continue;
-              }
-
-              // If this is the same camera we already have, keep the existing
-              // stream (avoids an unnecessary teardown + reopen).
-              if (settings?.deviceId === currentId) {
-                candidate.getTracks().forEach((t) => t.stop());
-                break;
-              }
-
-              // We found a better camera — switch to it.
-              stream.getTracks().forEach((t) => t.stop());
-              stream = candidate;
+              stream = candidateStream;
               break;
-            } catch {
-              // This device couldn't be opened — try the next one.
             }
           }
         } catch {
-          // Enumeration failed — continue with the initial stream.
+          /* enumeration failed — fall through to the fallback below */
         }
 
-        // Step 3 — apply 3× zoom on whichever camera we ended up with.
+        // Fallback — if selection stopped the stream and nothing better opened,
+        // reopen the default environment camera rather than showing nothing.
+        if (!stream) {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { ...VIDEO_BASE, facingMode: { ideal: "environment" } },
+            audio: false,
+          });
+        }
+
+        // Step 3 — request 3× zoom. If the zoom API is unavailable (some
+        // Android WebViews), the camera stays at its native 1× — acceptable,
+        // as long as it is the MAIN lens and not the ultra-wide.
         try {
           const track = stream.getVideoTracks()[0];
           const caps = (track?.getCapabilities as any)?.() as any;
-          if (caps?.zoom) {
-            const target = Math.min(3, caps.zoom.max ?? 3);
+          if (caps?.zoom?.max != null) {
+            const target = Math.max(1, Math.min(3, caps.zoom.max));
             await (track as any).applyConstraints({ advanced: [{ zoom: target }] });
           }
         } catch {
-          // Zoom API not available — continue without it.
+          /* zoom not supported — stay at 1× */
         }
 
         if (cancelled || doneRef.current) {
@@ -194,6 +277,7 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
         }
 
         streamRef.current = stream;
+        setCameraLabel(stream.getVideoTracks()[0]?.label || null);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
@@ -249,8 +333,13 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
               <div className="w-40 h-40 border-2 border-white/70 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
             </div>
             <div className="absolute top-0 left-0 right-0 h-1 bg-primary/80 shadow-[0_0_20px_rgba(58,174,82,0.6)] animate-scan" />
-            <div className="absolute bottom-4 left-0 right-0 text-center">
+            <div className="absolute bottom-3 left-0 right-0 text-center">
               <p className="text-white/80 text-[10px] font-mono tracking-widest uppercase">{label}</p>
+              {cameraLabel && (
+                <p className="text-white/40 text-[9px] font-mono mt-0.5 truncate px-3">
+                  {cameraLabel}
+                </p>
+              )}
             </div>
           </>
         )}

@@ -38,3 +38,17 @@ host/OTG), matching the reference Flutter app.
 
 - **Rebuild before sync:** Capacitor copies the built web assets, so run the web
   build before `cap sync` or the app ships stale assets.
+
+- **Camera selection on multi-lens Androids (Galaxy S22):** `facingMode:
+  environment` often opens the 0.5× ultra-wide. Two hard-won rules:
+  1. Android cannot hold two cameras open — stop the current stream BEFORE
+     opening a candidate, or every probe throws NotReadableError and the swap
+     silently never happens.
+  2. Rank cameras without opening them via `InputDeviceInfo.getCapabilities()`:
+     main sensor = highest max resolution; demote labels matching
+     ultra/wide; tiebreak on lowest Android camera index ("camera2 0, facing
+     back" is the main back camera). Zoom via `applyConstraints` may be a no-op
+     in the WebView — main lens at 1× is the accepted fallback, never the
+     ultra-wide.
+  **How to apply:** the scanner shows the active camera label under the reticle
+  for on-device verification of which lens was selected.
