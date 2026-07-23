@@ -17,15 +17,19 @@ import {
   X,
   Send,
   Download,
+  Upload,
   Moon,
 } from "lucide-react";
 import { ActionButton } from "@/components/ActionButton";
 import { StatusCard } from "@/components/StatusCard";
 import { Header } from "@/components/Header";
 import { QrScanner } from "@/components/QrScanner";
+import { VoiceNotes, blobToBase64, type LocalVoiceNote } from "@/components/VoiceNotes";
 import { useReader } from "@/hooks/useReader";
 import { useCreateResult } from "@/hooks/use-results";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
+import { api, buildUrl, type ResultResponse } from "@shared/routes";
 import { cn } from "@/lib/utils";
 import {
   parseResult,
@@ -61,6 +65,15 @@ export default function Workflow() {
   // arrives. Kept here so renderResult() still has the value even after the
   // reader moves on and clears readerState.resultText.
   const [snapshotResultText, setSnapshotResultText] = useState<string | null>(null);
+  // The row created by the auto-save — its id is what voice notes and the
+  // health-record push attach to.
+  const [savedResult, setSavedResult] = useState<ResultResponse | null>(null);
+  // Voice notes recorded on the result screen, held locally until pushed.
+  const [voiceNotes, setVoiceNotes] = useState<LocalVoiceNote[]>([]);
+  const [pushStatus, setPushStatus] = useState<"idle" | "pushing" | "pushed">("idle");
+  // True while the microphone is live in the VoiceNotes card — pushing is
+  // blocked until the nurse taps stop so no clip is silently left behind.
+  const [isRecording, setIsRecording] = useState(false);
 
   const { toast } = useToast();
   const createResult = useCreateResult();
@@ -68,10 +81,18 @@ export default function Workflow() {
   const { readerState } = reader;
   const view = readerState.currentView;
 
-  const savedRef = useRef(false);
   const prevViewRef = useRef("");
   const autoConnectedRef = useRef(false);
   const simPlayedRef = useRef(false);
+  // Incremented on every New Test / Home reset. Async work (save, push)
+  // captures the value when it starts and bails out of all state updates if a
+  // new test has begun since — a late network response must never contaminate
+  // the next patient's test.
+  const testSessionRef = useRef(0);
+  // Single-flight guard for creating the result row: the auto-save effect and
+  // the push handler both await this same promise, so a slow network can never
+  // produce duplicate rows. Cleared on failure so the next trigger retries.
+  const createPromiseRef = useRef<Promise<ResultResponse> | null>(null);
 
   // --- Start the assay countdown when the device reports SAMPLE_DETECTED ---
   useEffect(() => {
@@ -98,38 +119,54 @@ export default function Workflow() {
     if (phase === "running" && view === "DISPLAYRESULT" && readerState.resultText) {
       setSnapshotResultText(readerState.resultText);
       setResultLocked(true);
+      // Display timestamp is set when the result appears, independent of
+      // whether the server save succeeds.
+      setResultAt((prev) => prev ?? new Date());
     }
   }, [phase, view, readerState.resultText]);
 
   // --- Persist the result once the device displays it ----------------------
+  // Single-flight: the auto-save effect below and the push handler both call
+  // this and await the same promise. setSavedResult is session-guarded so a
+  // response arriving after "New Test" cannot leak into the next test.
+  const ensureResultSaved = (): Promise<ResultResponse> => {
+    if (createPromiseRef.current) return createPromiseRef.current;
+    const session = testSessionRef.current;
+    const parsed = parseResult(snapshotResultText ?? readerState.resultText);
+    if (parsed.value == null) return Promise.reject(new Error("No valid result to save"));
+    const { level, interpretation } = classifyValue(parsed.value);
+    const promise = createResult
+      .mutateAsync({
+        nurseId: nurseId || "UNKNOWN",
+        patientId: patientId || "UNKNOWN",
+        value: parsed.value,
+        units: parsed.units || "mg/L",
+        level,
+        interpretation,
+      })
+      .then((created) => {
+        if (testSessionRef.current === session) setSavedResult(created);
+        return created;
+      })
+      .catch((err) => {
+        // Allow a retry (next reader message or the push button).
+        if (createPromiseRef.current === promise) createPromiseRef.current = null;
+        throw err;
+      });
+    createPromiseRef.current = promise;
+    return promise;
+  };
+
   useEffect(() => {
     if (phase !== "running") return;
     // Only DISPLAYRESULT carries a valid result payload — every other screen
     // clears resultText in applyMessage, so this is the single save trigger.
-    if (view !== "DISPLAYRESULT" || !readerState.resultText || savedRef.current) return;
-
-    const { value, units } = parseResult(readerState.resultText);
-    if (value == null) return;
-
-    const { level, interpretation } = classifyValue(value);
-    savedRef.current = true;
-    setResultAt(new Date());
-    createResult.mutate(
-      {
-        nurseId: nurseId || "UNKNOWN",
-        patientId: patientId || "UNKNOWN",
-        value,
-        units: units || "mg/L",
-        level,
-        interpretation,
-      },
-      {
-        onError: () => {
-          savedRef.current = false;
-        },
-      },
-    );
-  }, [readerState, phase, nurseId, patientId, createResult, view, toast]);
+    if (view !== "DISPLAYRESULT" || !readerState.resultText) return;
+    ensureResultSaved().catch(() => {
+      /* Guard was cleared — retried on the next trigger or via push. */
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readerState, phase, view]);
 
   // Native auto-connect: mirror the Flutter app, which opens the USB connection
   // as soon as the reader screen appears. Runs once on the packaged Android
@@ -196,10 +233,16 @@ export default function Workflow() {
   };
 
   const newTest = () => {
-    savedRef.current = false;
+    testSessionRef.current += 1; // invalidate any in-flight save/push
+    createPromiseRef.current = null;
     simPlayedRef.current = false;
+    setIsRecording(false);
     setResultLocked(false);
     setSnapshotResultText(null);
+    voiceNotes.forEach((n) => URL.revokeObjectURL(n.url));
+    setVoiceNotes([]);
+    setPushStatus("idle");
+    setSavedResult(null);
     setNurseId("");
     setPatientId("");
     setTimeLeft(0);
@@ -213,16 +256,73 @@ export default function Workflow() {
 
   const goHome = async () => {
     await reader.disconnect();
-    savedRef.current = false;
+    testSessionRef.current += 1; // invalidate any in-flight save/push
+    createPromiseRef.current = null;
     simPlayedRef.current = false;
+    setIsRecording(false);
     setResultLocked(false);
     setSnapshotResultText(null);
+    voiceNotes.forEach((n) => URL.revokeObjectURL(n.url));
+    setVoiceNotes([]);
+    setPushStatus("idle");
+    setSavedResult(null);
     setNurseId("");
     setPatientId("");
     setTimeLeft(0);
     setResultAt(null);
     reader.resetReaderState();
     setPhase("connect");
+  };
+
+  // --- Push to health record ------------------------------------------------
+  // Ensures the result row exists (awaiting the same single-flight create as
+  // the auto-save), uploads any voice notes that haven't been uploaded yet,
+  // then stamps the record as pushed. Safe to retry — uploaded notes are
+  // skipped. Every state update after an await is session-guarded so a push
+  // finishing after "New Test" cannot touch the next test's screen.
+  const pushToHealthRecord = async () => {
+    if (pushStatus !== "idle" || isRecording) return;
+    const session = testSessionRef.current;
+    setPushStatus("pushing");
+    try {
+      const saved = savedResult ?? (await ensureResultSaved());
+      if (testSessionRef.current !== session) return;
+      const resultId = saved.id;
+
+      for (const note of voiceNotes) {
+        if (note.uploaded) continue;
+        const audioBase64 = await blobToBase64(note.blob);
+        await apiRequest("POST", buildUrl(api.voiceNotes.create.path, { id: resultId }), {
+          mimeType: note.mimeType,
+          durationSec: note.durationSec,
+          audioBase64,
+        });
+        if (testSessionRef.current !== session) return;
+        setVoiceNotes((prev) => prev.map((n) => (n.id === note.id ? { ...n, uploaded: true } : n)));
+      }
+
+      await apiRequest("POST", buildUrl(api.results.push.path, { id: resultId }));
+      if (testSessionRef.current !== session) return;
+      setPushStatus("pushed");
+      toast({
+        title: "Pushed to health record",
+        description:
+          voiceNotes.length > 0
+            ? `Result and ${voiceNotes.length} voice note${voiceNotes.length === 1 ? "" : "s"} saved to the patient record.`
+            : "Result saved to the patient record.",
+      });
+    } catch (err) {
+      if (testSessionRef.current !== session) return;
+      setPushStatus("idle");
+      toast({
+        title: "Push failed",
+        description:
+          err instanceof Error && err.message !== "Failed to fetch"
+            ? err.message
+            : "Could not reach the server. Check the connection and try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // --- Device-driven screens ----------------------------------------------
@@ -509,7 +609,50 @@ export default function Workflow() {
             </div>
           </div>
 
-          <ActionButton fullWidth onClick={newTest} data-testid="button-new-test">
+          <VoiceNotes
+            notes={voiceNotes}
+            onAdd={(note) => setVoiceNotes((prev) => [...prev, note])}
+            onDelete={(id) =>
+              setVoiceNotes((prev) => {
+                const note = prev.find((n) => n.id === id);
+                if (note) URL.revokeObjectURL(note.url);
+                return prev.filter((n) => n.id !== id);
+              })
+            }
+            locked={pushStatus !== "idle"}
+            onRecordingChange={setIsRecording}
+          />
+
+          {pushStatus === "pushed" ? (
+            <div
+              className="w-full bg-green-50 border-2 border-green-200 rounded-xl px-4 py-3 flex items-center justify-center gap-2 text-green-700 font-semibold"
+              data-testid="status-pushed-to-record"
+            >
+              <CheckCircle2 className="w-5 h-5" />
+              Pushed to Health Record
+            </div>
+          ) : (
+            <ActionButton
+              fullWidth
+              onClick={pushToHealthRecord}
+              disabled={pushStatus === "pushing" || createResult.isPending || isRecording}
+              data-testid="button-push-to-record"
+            >
+              {pushStatus === "pushing" ? (
+                <>
+                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                  Pushing…
+                </>
+              ) : (
+                <>
+                  <Upload className="w-5 h-5 mr-2" />
+                  Push to Health Record
+                </>
+              )}
+            </ActionButton>
+          )}
+
+          <ActionButton variant="outline" fullWidth onClick={newTest} data-testid="button-new-test">
             New Test
           </ActionButton>
         </div>

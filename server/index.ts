@@ -14,6 +14,9 @@ declare module "http" {
 
 app.use(
   express.json({
+    // Voice notes arrive as base64 JSON (~1 MB for a 2-minute clip); the
+    // Express default of 100 kb would reject them.
+    limit: "25mb",
     verify: (req, _res, buf) => {
       req.rawBody = buf;
     },

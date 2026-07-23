@@ -60,6 +60,8 @@ shared/           # Shared code between client/server
 
 4. **Component Library**: Uses shadcn/ui (new-york style) for consistent, accessible UI primitives built on Radix UI.
 
+5. **Session-guarded async on the result screen**: every async completion (result auto-save, voice-note upload, health-record push) captures a per-test session token and abandons all state updates if "New Test"/"Home" has run since — a late response must never mark the next patient's test as pushed or attach data to the wrong row. The result-row create is single-flight (auto-save and push await one shared promise), so duplicate rows can't be created by races.
+
 ### Physical Reader Integration
 - **Protocol** (`client/src/lib/readerProtocol.ts`): a TypeScript port of the reference Flutter `ReaderProtocol`. `applyMessage` reduces each serial line into `ReaderState`. `SCREEN:DISPLAYRESULT` is the **only** result-bearing screen — every other screen clears `resultText`, so it is the single trigger to display and persist a result. A missing/NaN result is never shown as `0`; it renders a "result unavailable / retest" state.
 - **Transport** (`client/src/lib/readerConnection.ts`): a `ReaderConnection` interface with three implementations — `WebSerialConnection` (real hardware on desktop Chrome/Edge), `CapacitorSerialConnection` (real hardware on the packaged Android app, via the native `ReaderSerial` plugin), and `SimulatorConnection` (inject lines by hand). The `useReader` hook owns the connection, selects the native transport when `Capacitor.isNativePlatform()` is true, and exposes the derived state, logs, and button commands.
@@ -69,6 +71,8 @@ shared/           # Shared code between client/server
 
 ### Data Storage Detail
 - The `results` table stores `value` (double precision) + `units` (text, default `mg/L`) as sent by the device (`RESULT:<value>:<units>`); `level`/`interpretation` come from the SAA2 5-band classification (`classifyValue`).
+- `results.pushedToRecordAt` is stamped by `POST /api/results/:id/push` (the result screen's "Push to Health Record" button). A real EHR/FHIR hand-off would hook into that endpoint before the stamp.
+- The `voice_notes` table holds nurse-recorded audio observations per result (`client/src/components/VoiceNotes.tsx`, MediaRecorder webm/opus, 2-minute cap, base64 inline, cascade delete). Create/list endpoints return metadata only; raw bytes stream from `GET /api/voice-notes/:id/audio`. Notes stay local blobs until the push uploads them.
 
 ### Android App (Capacitor)
 The web app is packaged as a native Android app with Capacitor so the app itself owns the USB connection to the reader (USB host / OTG), mirroring the reference Flutter app. Build/run instructions live in `ANDROID.md`.

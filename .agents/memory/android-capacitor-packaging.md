@@ -52,3 +52,10 @@ host/OTG), matching the reference Flutter app.
      ultra-wide.
   **How to apply:** the scanner shows the active camera label under the reticle
   for on-device verification of which lens was selected.
+
+- **Voice recording in the WebView:** declare `RECORD_AUDIO` (+
+  `MODIFY_AUDIO_SETTINGS`) in the manifest; Capacitor's default
+  BridgeWebChromeClient then handles the WebView getUserMedia grant the same
+  way it already does for the camera — no custom `onPermissionRequest` needed.
+  MediaRecorder in the WebView records webm/opus, and Chrome reports `Infinity`
+  as the duration of webm blobs — time recordings yourself while recording.

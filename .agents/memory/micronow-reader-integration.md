@@ -46,3 +46,18 @@ is the host; with no device and a hidden manual panel, users saw "nothing
 happens." **How to apply:** keep the manual panel, but the default preview path
 must advance on its own; gate the auto-play on `kind==='simulator'` so the
 real-hardware path is untouched, and make WAITING copy simulator-aware.
+
+## Cross-test contamination guards (result screen)
+The result screen hosts async work (result auto-save, voice-note uploads,
+"Push to Health Record"). Rules, born from a review-caught race:
+- **Session token:** each async chain captures the per-test session counter at
+  start and abandons remaining steps + ALL state updates if it changed ("New
+  Test"/"Home" increment it). **Why:** a late completion otherwise marks the
+  NEXT patient's test as pushed, or attaches notes to the previous result row.
+- **Single-flight create:** auto-save and push must await one shared
+  create-result promise, never issue independent creates for the same test.
+- **Recorder unmount:** MediaRecorder `onstop` fires after unmount when the
+  screen resets mid-recording; discard the clip via an unmounted flag — an
+  `onAdd` there would drop the clip into the next test's note list.
+- Pushing is blocked while the mic is live so no clip is silently left
+  unuploaded on a "pushed" screen.
