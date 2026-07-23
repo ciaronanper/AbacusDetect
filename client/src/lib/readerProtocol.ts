@@ -121,7 +121,9 @@ export function viewToDisplayText(view: string): string {
     case "UPDATING":
       return "Updating";
     case "POWEROFF":
-      return "Power off";
+      // Never surfaced as "powering off" — the app always shows the next
+      // actionable step instead.
+      return "Insert cartridge";
     case "CARTRIDGE_REMOVED":
       return "Cartridge removed";
     case "CARTIRDGE_USED":
@@ -132,7 +134,9 @@ export function viewToDisplayText(view: string): string {
     case "CHECKINGBATTERY":
       return "Checking battery";
     case "WAITING":
-      return "Waiting for reader";
+      // Never surfaced as "waiting for reader" — the app always shows the
+      // next actionable step instead.
+      return "Insert cartridge";
     default:
       return normalized.replace(/_/g, " ");
   }

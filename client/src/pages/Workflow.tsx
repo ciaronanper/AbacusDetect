@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Power,
   ScanLine,
   CheckCircle2,
   User,
@@ -455,13 +454,6 @@ export default function Workflow() {
           </div>
         );
 
-      case "POWEROFF":
-        return (
-          <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
-            <StatusCard icon={Power} title="Power Off" description="The reader is powering off." />
-          </div>
-        );
-
       case "WAKEUP":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
@@ -471,10 +463,13 @@ export default function Workflow() {
 
       case "INSERT_CARTRIDGE":
       case "WAITING":
+      case "POWEROFF":
       default:
         // The reader is not smart — if the app hasn't received a recognisable
-        // screen yet (startup, WAITING, or any unknown message), always show
-        // the first assay step instead of a vague "follow the reader" screen.
+        // screen yet (startup, WAITING, POWEROFF, or any unknown message),
+        // always show the first assay step instead of a vague "waiting" or
+        // "powering off" screen. The nurse's next action is always the same:
+        // insert a cartridge.
         return (
           <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
             <img src={logoPng} alt="Abacus Labs" className="h-28 w-auto mx-auto object-contain" />
