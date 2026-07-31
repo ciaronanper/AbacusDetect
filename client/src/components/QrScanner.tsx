@@ -313,7 +313,7 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      <div className="relative w-64 h-64 bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800">
+      <div className="relative w-full max-w-sm aspect-square bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800">
         {error ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-white bg-slate-800">
             <Camera className="w-12 h-12 opacity-40" />
@@ -330,7 +330,7 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
             />
             {/* Reticle */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-40 h-40 border-2 border-white/70 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
+              <div className="w-[60%] aspect-square border-2 border-white/70 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
             </div>
             <div className="absolute top-0 left-0 right-0 h-1 bg-primary/80 shadow-[0_0_20px_rgba(58,174,82,0.6)] animate-scan" />
             <div className="absolute bottom-3 left-0 right-0 text-center">

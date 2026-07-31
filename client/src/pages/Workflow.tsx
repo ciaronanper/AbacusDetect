@@ -43,6 +43,21 @@ type Phase = "connect" | "nurse-scan" | "patient-scan" | "running";
 
 const TEST_DURATION_SECONDS = 300; // 5-minute assay countdown (visual)
 
+// Random simulated result: pick a random SAA2 band, then a random value inside
+// it, so previews exercise every result band instead of always "Moderate".
+const randomResultLine = () => {
+  const bands: Array<[number, number]> = [
+    [1, 10], // Very Low
+    [10, 50], // Low
+    [50, 200], // Moderate
+    [200, 300], // High
+    [300, 550], // Very High
+  ];
+  const [min, max] = bands[Math.floor(Math.random() * bands.length)];
+  const value = (min + Math.random() * (max - min)).toFixed(1);
+  return `RESULT:${value}:mg/L`;
+};
+
 const formatTime = (seconds: number) => {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
@@ -197,7 +212,7 @@ export default function Workflow() {
       { at: 2300, line: "VIEW:APPLY_DROPS" },
       { at: 3800, line: "VIEW:SAMPLE_DETECTED" },
       { at: 6300, line: "SCREEN:RUNASSAY" },
-      { at: 7500, line: "RESULT:162:mg/L" },
+      { at: 7500, line: randomResultLine() },
       { at: 7800, line: "SCREEN:DISPLAYRESULT" },
     ];
     const timers = sequence.map(({ at, line }) => setTimeout(() => reader.inject(line), at));
@@ -247,10 +262,11 @@ export default function Workflow() {
     setTimeLeft(0);
     setResultAt(null);
     reader.resetReaderState();
-    // After a completed test the reader stays connected — always go straight
-    // back to nurse QR scan to begin the next test. Only fall back to the
-    // connect screen if the reader has been unplugged.
-    setPhase(reader.connected ? "nurse-scan" : "connect");
+    // "New Test" returns to the very first screen (Connect Reader — the page
+    // before the nurse QR scan) and drops the connection so the next test
+    // starts completely fresh.
+    void reader.disconnect();
+    setPhase("connect");
   };
 
   const goHome = async () => {
@@ -335,6 +351,26 @@ export default function Workflow() {
     : view === "CHECKING" && timerActive
     ? "SAMPLE_DETECTED"
     : view;
+
+  // Views with their own dedicated screen. Everything else (WAITING, POWEROFF,
+  // INSERT_CARTRIDGE, unknown messages) renders the Insert Cartridge screen,
+  // so they share one animation key — otherwise moving between two of them
+  // (e.g. WAITING → INSERT_CARTRIDGE) replays the transition between two
+  // identical-looking screens and the nurse sees "Insert Cartridge" twice.
+  const DEDICATED_VIEWS = new Set([
+    "APPLY_DROPS",
+    "SAMPLE_DETECTED",
+    "CHECKING",
+    "UPDATING",
+    "DISPLAYRESULT",
+    "UPDATE_FINISHED",
+    "ERROR",
+    "BARCODE_INVALID",
+    "NOCLINE",
+    "CLEAN_LENS",
+    "WAKEUP",
+  ]);
+  const screenKey = DEDICATED_VIEWS.has(effectiveView) ? effectiveView : "INSERT_CARTRIDGE";
 
   const renderDeviceView = () => {
     switch (effectiveView) {
@@ -725,7 +761,7 @@ export default function Workflow() {
       <main className="flex-1 px-6 pt-20 pb-8 safe-area-pb overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
-            key={`${phase}-${phase === "running" ? effectiveView : ""}`}
+            key={`${phase}-${phase === "running" ? screenKey : ""}`}
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -20 }}
@@ -786,7 +822,7 @@ function SimulatorPanel({ open, onToggle, logs, onInject, onClear }: SimulatorPa
       "VIEW:APPLY_DROPS",
       "VIEW:SAMPLE_DETECTED",
       "SCREEN:RUNASSAY",
-      "RESULT:162:mg/L",
+      randomResultLine(),
       "SCREEN:DISPLAYRESULT",
     ];
     seq.forEach((line, i) => setTimeout(() => onInject(line), i * 1200));
