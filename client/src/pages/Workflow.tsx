@@ -35,6 +35,7 @@ import {
   classifyValue,
   errorToDisplayText,
 } from "@/lib/readerProtocol";
+import { saveResultPdfLocally } from "@/lib/resultPdf";
 import logoPng from "@assets/Vertical_logo_bgtransparent_1769613129480.png";
 
 // App-controlled phases. Nurse + patient identification happen on the phone;
@@ -319,12 +320,38 @@ export default function Workflow() {
       await apiRequest("POST", buildUrl(api.results.push.path, { id: resultId }));
       if (testSessionRef.current !== session) return;
       setPushStatus("pushed");
+
+      // Local PDF copy of the result screen. Best-effort: the push has already
+      // succeeded, so a PDF problem is reported but never undoes the push.
+      let pdfNote: string | null = null;
+      try {
+        const parsed = parseResult(snapshotResultText ?? readerState.resultText);
+        if (parsed.value != null) {
+          const location = await saveResultPdfLocally({
+            nurseId: nurseId || "UNKNOWN",
+            patientId: patientId || "UNKNOWN",
+            value: parsed.value,
+            units: parsed.units || "mg/L",
+            resultAt: resultAt ?? new Date(),
+            voiceNoteCount: voiceNotes.length,
+          });
+          pdfNote = `PDF saved: ${location}`;
+        }
+      } catch {
+        pdfNote = "PDF copy could not be saved on this device.";
+      }
+      if (testSessionRef.current !== session) return;
+
       toast({
         title: "Pushed to health record",
-        description:
+        description: [
           voiceNotes.length > 0
             ? `Result and ${voiceNotes.length} voice note${voiceNotes.length === 1 ? "" : "s"} saved to the patient record.`
             : "Result saved to the patient record.",
+          pdfNote,
+        ]
+          .filter(Boolean)
+          .join(" "),
       });
     } catch (err) {
       if (testSessionRef.current !== session) return;
