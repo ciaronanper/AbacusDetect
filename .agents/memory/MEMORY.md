@@ -1,3 +1,4 @@
 - [MicroNow reader integration](micronow-reader-integration.md) — DISPLAYRESULT is the sole result screen, power-button handshake, preview sandbox limits, cross-test async contamination guards.
 - [Android Capacitor packaging](android-capacitor-packaging.md) — packaged with Capacitor; APK builds only in Android Studio (no SDK in Replit); native USB is the 3rd ReaderConnection.
+- [GitHub push fallback via API](github-push-fallback.md) — when gitPush/shell auth die, replay commits via the Git Data API with exact author/date/message (+trailing \n) for identical SHAs.
 - [Flutter app in this repl](flutter-project-in-repl.md) — separate Dart app in `flutter_app/abacusdetect_v1/`; Dart module exists but no Flutter SDK in Replit, so only `dart format` syntax-checks; analyze/build/run happen on the user's machine.
