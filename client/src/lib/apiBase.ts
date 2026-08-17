@@ -7,7 +7,13 @@
 // (see client/.env.example). When it is empty, paths stay relative.
 import { Capacitor } from "@capacitor/core";
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL ?? "").replace(/\/+$/, "");
+// Published backend the packaged app talks to. VITE_API_BASE_URL (set at
+// build time) overrides it; the URL is public, not a secret.
+const DEFAULT_NATIVE_API_BASE = "https://abacus-detect.replit.app";
+
+const API_BASE = (
+  import.meta.env.VITE_API_BASE_URL || DEFAULT_NATIVE_API_BASE
+).replace(/\/+$/, "");
 
 /** Prefix an API path with the deployed backend base URL when running natively. */
 export function apiUrl(path: string): string {

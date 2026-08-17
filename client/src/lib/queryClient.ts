@@ -4,7 +4,29 @@ import { apiUrl } from "./apiBase";
 async function throwIfResNotOk(res: Response) {
   if (!res.ok) {
     const text = (await res.text()) || res.statusText;
+    if (text.trimStart().startsWith("<")) {
+      // An HTML page came back instead of data — the request never reached
+      // the API (wrong/missing server address or the SPA fallback answered).
+      throw new Error(
+        "Could not reach the AbacusDetect server. Check your internet connection and try again.",
+      );
+    }
     throw new Error(`${res.status}: ${text}`);
+  }
+}
+
+/**
+ * Guards against a 200 response that is actually an HTML page (e.g. the
+ * packaged app hitting its own bundled files instead of the server, or a
+ * captive-portal network). Throws a plain-English error instead of letting
+ * JSON.parse fail with "Unexpected token '<'".
+ */
+function throwIfNotJson(res: Response) {
+  const type = res.headers.get("content-type") ?? "";
+  if (!type.includes("application/json")) {
+    throw new Error(
+      "Could not reach the AbacusDetect server. Check your internet connection and try again.",
+    );
   }
 }
 
@@ -21,6 +43,7 @@ export async function apiRequest(
   });
 
   await throwIfResNotOk(res);
+  throwIfNotJson(res);
   return res;
 }
 
@@ -39,6 +62,7 @@ export const getQueryFn: <T>(options: {
     }
 
     await throwIfResNotOk(res);
+    throwIfNotJson(res);
     return await res.json();
   };
 
