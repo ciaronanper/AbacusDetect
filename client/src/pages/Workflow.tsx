@@ -666,9 +666,9 @@ export default function Workflow() {
                 { range: "50.1–75.0", label: "Probable Bacterial" },
                 { range: "75.1–100.0", label: "Definite Bacterial" },
               ].map(({ range, label }) => (
-                <div key={range} className="flex-1 text-center text-[10px] leading-tight font-bold text-foreground px-0.5 break-words">
+                <div key={range} className="flex-1 text-center text-xs leading-tight font-bold text-foreground px-1 break-words">
                   <span className="block">{range}</span>
-                  <span className="block mt-1">{label}</span>
+                  <span className="block mt-1.5">{label}</span>
                 </div>
               ))}
             </div>
