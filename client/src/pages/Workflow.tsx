@@ -603,6 +603,13 @@ export default function Workflow() {
     ) / 10;
     const gaugePinPct = ((abacusIndex - 0.1) / 99.9) * 100;
     const gaugeZone = Math.min(Math.floor((abacusIndex - 0.1) / 25) + 1, 4);
+    const gaugeLabels = [
+      "Definite Viral",
+      "Probable Viral",
+      "Probable Bacterial",
+      "Definite Bacterial",
+    ];
+    const gaugeLabel = gaugeLabels[gaugeZone - 1];
     const pinLeft = `clamp(12px, calc(${gaugePinPct}% - 12px), calc(100% - 12px))`;
 
     return (
@@ -636,7 +643,7 @@ export default function Workflow() {
             <div className="flex items-center justify-between mb-5">
               <span className="text-sm font-bold text-foreground uppercase tracking-wider">Abacus Index</span>
               <span className="text-sm font-bold px-3 py-1 rounded-full text-white bg-gray-700">
-                {abacusIndex.toFixed(1)} · Zone {gaugeZone}
+                {abacusIndex.toFixed(1)} · {gaugeLabel}
               </span>
             </div>
             <div className="relative px-1">
@@ -654,13 +661,14 @@ export default function Workflow() {
             </div>
             <div className="flex mt-3">
               {[
-                "0.1–25.0",
-                "25.1–50.0",
-                "50.1–75.0",
-                "75.1–100.0",
-              ].map((label) => (
-                <div key={label} className="flex-1 text-center text-[10px] leading-tight font-bold text-foreground px-0.5 break-words">
-                  {label}
+                { range: "0.1–25.0", label: "Definite Viral" },
+                { range: "25.1–50.0", label: "Probable Viral" },
+                { range: "50.1–75.0", label: "Probable Bacterial" },
+                { range: "75.1–100.0", label: "Definite Bacterial" },
+              ].map(({ range, label }) => (
+                <div key={range} className="flex-1 text-center text-[10px] leading-tight font-bold text-foreground px-0.5 break-words">
+                  <span className="block">{range}</span>
+                  <span className="block mt-1">{label}</span>
                 </div>
               ))}
             </div>
