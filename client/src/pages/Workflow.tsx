@@ -44,10 +44,18 @@ type Phase = "connect" | "nurse-scan" | "patient-scan" | "running";
 
 const TEST_DURATION_SECONDS = 300; // 5-minute assay countdown (visual)
 
-// Random simulated SAA2 result, represented as a discrete tenth between
-// 0.1 and 100.0 mg/L.
+// Generate the mock SAA2 reading in its native mg/L range. It remains hidden
+// from the result screen and is mapped to the unitless Abacus Index below.
 const randomResultLine = () => {
-  const value = ((Math.floor(Math.random() * 1000) + 1) / 10).toFixed(1);
+  const bands: Array<[number, number]> = [
+    [1, 10],
+    [10, 50],
+    [50, 200],
+    [200, 300],
+    [300, 550],
+  ];
+  const [min, max] = bands[Math.floor(Math.random() * bands.length)];
+  const value = (min + Math.random() * (max - min)).toFixed(1);
   return `RESULT:${value}:mg/L`;
 };
 
@@ -588,9 +596,13 @@ export default function Workflow() {
         ? { label: "High", bg: "bg-orange-50", border: "border-orange-200", textColor: "text-orange-700", badgeColor: "bg-orange-500", zone: "Zone 2" }
         : { label: "Very High", bg: "bg-red-50", border: "border-red-200", textColor: "text-red-700", badgeColor: "bg-red-500", zone: "Zone 1" };
 
-    const gaugeValue = Math.min(Math.max(value, 0.1), 100);
-    const gaugePinPct = ((gaugeValue - 0.1) / 99.9) * 100;
-    const gaugeZone = Math.min(Math.floor((gaugeValue - 0.1) / 25) + 1, 4);
+    // Map the hidden 1–550 mg/L mock range linearly to a discrete, unitless
+    // Abacus Index score from 0.1–100.0.
+    const abacusIndex = Math.round(
+      Math.min(Math.max(0.1 + ((value - 1) / 549) * 99.9, 0.1), 100) * 10,
+    ) / 10;
+    const gaugePinPct = ((abacusIndex - 0.1) / 99.9) * 100;
+    const gaugeZone = Math.min(Math.floor((abacusIndex - 0.1) / 25) + 1, 4);
     const pinLeft = `clamp(12px, calc(${gaugePinPct}% - 12px), calc(100% - 12px))`;
 
     return (
@@ -622,8 +634,10 @@ export default function Workflow() {
 
           <div className="bg-card border border-border rounded-xl p-5 shadow-sm" data-testid="card-severity-gauge">
             <div className="flex items-center justify-between mb-5">
-              <span className="text-sm font-bold text-foreground uppercase tracking-wider">SAA2 Range</span>
-              <span className="text-sm font-bold px-3 py-1 rounded-full text-white bg-gray-700">Zone {gaugeZone}</span>
+              <span className="text-sm font-bold text-foreground uppercase tracking-wider">Abacus Index</span>
+              <span className="text-sm font-bold px-3 py-1 rounded-full text-white bg-gray-700">
+                {abacusIndex.toFixed(1)} · Zone {gaugeZone}
+              </span>
             </div>
             <div className="relative px-1">
               <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
@@ -640,10 +654,10 @@ export default function Workflow() {
             </div>
             <div className="flex mt-3">
               {[
-                "0.1–25.0 mg/L",
-                "25.1–50.0 mg/L",
-                "50.1–75.0 mg/L",
-                "75.1–100.0 mg/L",
+                "0.1–25.0",
+                "25.1–50.0",
+                "50.1–75.0",
+                "75.1–100.0",
               ].map((label) => (
                 <div key={label} className="flex-1 text-center text-[10px] leading-tight font-bold text-foreground px-0.5 break-words">
                   {label}
