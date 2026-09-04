@@ -44,18 +44,10 @@ type Phase = "connect" | "nurse-scan" | "patient-scan" | "running";
 
 const TEST_DURATION_SECONDS = 300; // 5-minute assay countdown (visual)
 
-// Random simulated result: pick a random SAA2 band, then a random value inside
-// it, so previews exercise every result band instead of always "Moderate".
+// Random simulated SAA2 result, represented as a discrete tenth between
+// 0.1 and 100.0 mg/L.
 const randomResultLine = () => {
-  const bands: Array<[number, number]> = [
-    [1, 10], // Very Low
-    [10, 50], // Low
-    [50, 200], // Moderate
-    [200, 300], // High
-    [300, 550], // Very High
-  ];
-  const [min, max] = bands[Math.floor(Math.random() * bands.length)];
-  const value = (min + Math.random() * (max - min)).toFixed(1);
+  const value = ((Math.floor(Math.random() * 1000) + 1) / 10).toFixed(1);
   return `RESULT:${value}:mg/L`;
 };
 
@@ -596,14 +588,9 @@ export default function Workflow() {
         ? { label: "High", bg: "bg-orange-50", border: "border-orange-200", textColor: "text-orange-700", badgeColor: "bg-orange-500", zone: "Zone 2" }
         : { label: "Very High", bg: "bg-red-50", border: "border-red-200", textColor: "text-red-700", badgeColor: "bg-red-500", zone: "Zone 1" };
 
-    const gaugePinPct = (() => {
-      const s = value;
-      if (s < 10) return (s / 10) * 20;
-      if (s < 50) return 20 + ((s - 10) / 40) * 20;
-      if (s <= 200) return 40 + ((s - 50) / 150) * 20;
-      if (s <= 300) return 60 + ((s - 200) / 100) * 20;
-      return 80 + Math.min((s - 300) / 300, 1) * 20;
-    })();
+    const gaugeValue = Math.min(Math.max(value, 0.1), 100);
+    const gaugePinPct = ((gaugeValue - 0.1) / 99.9) * 100;
+    const gaugeZone = Math.min(Math.floor((gaugeValue - 0.1) / 25) + 1, 4);
     const pinLeft = `clamp(12px, calc(${gaugePinPct}% - 12px), calc(100% - 12px))`;
 
     return (
@@ -636,7 +623,7 @@ export default function Workflow() {
           <div className="bg-card border border-border rounded-xl p-5 shadow-sm" data-testid="card-severity-gauge">
             <div className="flex items-center justify-between mb-5">
               <span className="text-sm font-bold text-foreground uppercase tracking-wider">SAA2 Range</span>
-              <span className={cn("text-sm font-bold px-3 py-1 rounded-full text-white", band.badgeColor)}>{band.zone}</span>
+              <span className="text-sm font-bold px-3 py-1 rounded-full text-white bg-gray-700">Zone {gaugeZone}</span>
             </div>
             <div className="relative px-1">
               <div className="absolute bottom-[calc(100%-2px)] flex flex-col items-center" style={{ left: pinLeft }}>
@@ -644,21 +631,19 @@ export default function Workflow() {
               </div>
               <div className="mt-10 rounded-xl border-2 border-gray-200 overflow-hidden">
                 <div className="flex h-10">
-                  <div className="bg-green-800" style={{ width: "20%" }} />
-                  <div className="bg-green-400" style={{ width: "20%" }} />
-                  <div className="bg-yellow-400" style={{ width: "20%" }} />
-                  <div className="bg-orange-500" style={{ width: "20%" }} />
-                  <div className="bg-red-500" style={{ width: "20%" }} />
+                  <div className="bg-green-500 flex-1" />
+                  <div className="bg-yellow-400 flex-1" />
+                  <div className="bg-orange-500 flex-1" />
+                  <div className="bg-red-500 flex-1" />
                 </div>
               </div>
             </div>
             <div className="flex mt-3">
               {[
-                "<10 mg/L",
-                "<50 mg/L",
-                "50–200 mg/L",
-                ">200 mg/L",
-                ">300 mg/L",
+                "0.1–25.0 mg/L",
+                "25.1–50.0 mg/L",
+                "50.1–75.0 mg/L",
+                "75.1–100.0 mg/L",
               ].map((label) => (
                 <div key={label} className="flex-1 text-center text-[10px] leading-tight font-bold text-foreground px-0.5 break-words">
                   {label}
