@@ -735,11 +735,11 @@ export default function Workflow() {
             <div className="w-full space-y-3">
               <ActionButton fullWidth onClick={connectUsb} disabled={reader.connecting} data-testid="button-connect-usb">
                 <Usb className="w-5 h-5 mr-2" />
-                {reader.connecting ? "Starting…" : "Begin Test"}
+                {reader.connecting ? "Starting…" : "Start Real Test"}
               </ActionButton>
               <ActionButton variant="outline" fullWidth onClick={connectSimulator} disabled={reader.connecting} data-testid="button-connect-simulator">
                 <Bug className="w-5 h-5 mr-2" />
-                Use Simulator
+                Simulator
               </ActionButton>
             </div>
           </div>
