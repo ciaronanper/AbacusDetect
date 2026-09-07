@@ -185,7 +185,7 @@ export default function Workflow() {
 
   // Native auto-connect: mirror the Flutter app, which opens the USB connection
   // as soon as the reader screen appears. Runs once on the packaged Android
-  // build; on the web the user taps "Connect Reader (USB)" instead.
+  // build; on the web the user taps "Begin Test" instead.
   useEffect(() => {
     if (autoConnectedRef.current || !reader.isNativePlatform) return;
     autoConnectedRef.current = true;
@@ -235,8 +235,8 @@ export default function Workflow() {
         description: reader.isNativePlatform
           ? "Plug the reader into the phone and allow USB access when prompted, then try again."
           : reader.webSerialSupported
-          ? "No reader detected over USB. Connect the AbacusDetect reader to this computer, or use the Android app with the reader plugged into the phone. Or tap \u201CUse Simulator\u201D to preview the flow."
-          : "USB serial needs desktop Chrome/Edge or the packaged Android app. Tap \u201CUse Simulator\u201D to preview the flow.",
+          ? "No device detected over USB. Plug the device into this computer, or use the Android app with the device plugged into the phone. You can also tap \u201CUse Simulator\u201D."
+          : "USB serial needs desktop Chrome/Edge or the packaged Android app. You can also tap \u201CUse Simulator\u201D.",
         variant: "destructive",
       });
     }
@@ -263,7 +263,7 @@ export default function Workflow() {
     setTimeLeft(0);
     setResultAt(null);
     reader.resetReaderState();
-    // "New Test" returns to the very first screen (Connect Reader — the page
+    // "New Test" returns to the very first screen (the page
     // before the nurse QR scan) and drops the connection so the next test
     // starts completely fresh.
     void reader.disconnect();
@@ -732,25 +732,16 @@ export default function Workflow() {
         return (
           <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
             <img src={logoPng} alt="Abacus Labs" className="h-36 w-auto mx-auto object-contain" />
-            <div className="text-center space-y-1">
-              <h2 className="text-xl font-display font-bold">Connect Reader</h2>
-              <p className="text-sm text-muted-foreground">Plug in the AbacusDetect reader over USB to begin.</p>
-            </div>
             <div className="w-full space-y-3">
               <ActionButton fullWidth onClick={connectUsb} disabled={reader.connecting} data-testid="button-connect-usb">
                 <Usb className="w-5 h-5 mr-2" />
-                {reader.connecting ? "Connecting…" : "Connect Reader (USB)"}
+                {reader.connecting ? "Starting…" : "Begin Test"}
               </ActionButton>
               <ActionButton variant="outline" fullWidth onClick={connectSimulator} disabled={reader.connecting} data-testid="button-connect-simulator">
                 <Bug className="w-5 h-5 mr-2" />
-                Use Simulator (Preview)
+                Use Simulator
               </ActionButton>
             </div>
-            {!reader.isNativePlatform && !reader.webSerialSupported && (
-              <p className="text-xs text-center text-muted-foreground">
-                USB serial needs desktop Chrome/Edge or the packaged Android build. Use the simulator to preview the flow here.
-              </p>
-            )}
           </div>
         );
 
