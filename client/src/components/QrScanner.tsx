@@ -340,7 +340,7 @@ export function QrScanner({ onScan }: QrScannerProps) {
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      <div className="relative w-full max-w-2xl aspect-[4/3] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-800">
+      <div className="relative w-full max-w-sm h-[58vh] min-h-[360px] max-h-[620px] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-800">
         {error ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-white bg-slate-800">
             <Camera className="w-12 h-12 opacity-40" />
