@@ -3,8 +3,7 @@ import jsQR from "jsqr";
 import { Camera, Keyboard } from "lucide-react";
 
 interface QrScannerProps {
-  label: string;
-  /** Called once with the decoded QR text (or manually entered value). */
+  /** Called once with the decoded ID text (or manually entered value). */
   onScan: (text: string) => void;
 }
 
@@ -119,12 +118,10 @@ const openCamera = async (deviceId: string): Promise<MediaStream | null> => {
 };
 
 /**
- * Real QR scanning using the device's main rear camera. Frames are grabbed
- * from the video element and decoded with jsQR each animation frame. If the
- * camera is unavailable (permissions, no device, sandboxed preview) it falls
- * back to manual entry.
+ * ID scanning using the device's main rear camera. The native BarcodeDetector
+ * handles common 1D and 2D formats where available, with jsQR as a fallback.
  */
-export function QrScanner({ label, onScan }: QrScannerProps) {
+export function QrScanner({ onScan }: QrScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -141,8 +138,6 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [manual, setManual] = useState(false);
   const [manualValue, setManualValue] = useState("");
-  // Shown under the scanning label so it's verifiable WHICH lens is active.
-  const [cameraLabel, setCameraLabel] = useState<string | null>(null);
 
   /** Stop the RAF loop and release the camera. Safe to call multiple times. */
   const stopCamera = useCallback(() => {
@@ -165,15 +160,47 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
       onScanRef.current(text);
     };
 
-    const tick = () => {
+    const BarcodeDetectorClass = (window as any).BarcodeDetector;
+    const barcodeDetector = BarcodeDetectorClass
+      ? new BarcodeDetectorClass({
+          formats: [
+            "qr_code",
+            "code_128",
+            "code_39",
+            "codabar",
+            "ean_8",
+            "ean_13",
+            "itf",
+            "upc_a",
+            "upc_e",
+          ],
+        })
+      : null;
+    let detecting = false;
+
+    const tick = async () => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       if (!video || !canvas || doneRef.current || cancelled) return;
 
-      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+      if (video.readyState === video.HAVE_ENOUGH_DATA && !detecting) {
+        detecting = true;
         const w = video.videoWidth;
         const h = video.videoHeight;
         if (w && h) {
+          if (barcodeDetector) {
+            try {
+              const codes = await barcodeDetector.detect(video);
+              const value = codes[0]?.rawValue?.trim();
+              if (value) {
+                finish(value);
+                return;
+              }
+            } catch {
+              /* use the QR fallback below */
+            }
+          }
+
           canvas.width = w;
           canvas.height = h;
           const ctx = canvas.getContext("2d", { willReadFrequently: true });
@@ -187,6 +214,7 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
             }
           }
         }
+        detecting = false;
       }
       rafRef.current = requestAnimationFrame(tick);
     };
@@ -277,7 +305,6 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
         }
 
         streamRef.current = stream;
-        setCameraLabel(stream.getVideoTracks()[0]?.label || null);
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
@@ -313,7 +340,7 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      <div className="relative w-full max-w-sm aspect-square bg-slate-900 rounded-3xl overflow-hidden shadow-2xl border-4 border-slate-800">
+      <div className="relative w-full max-w-2xl aspect-[4/3] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-800">
         {error ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-white bg-slate-800">
             <Camera className="w-12 h-12 opacity-40" />
@@ -328,19 +355,7 @@ export function QrScanner({ label, onScan }: QrScannerProps) {
               muted
               className="absolute inset-0 w-full h-full object-cover"
             />
-            {/* Reticle */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div className="w-[60%] aspect-square border-2 border-white/70 rounded-2xl shadow-[0_0_0_9999px_rgba(0,0,0,0.35)]" />
-            </div>
             <div className="absolute top-0 left-0 right-0 h-1 bg-primary/80 shadow-[0_0_20px_rgba(58,174,82,0.6)] animate-scan" />
-            <div className="absolute bottom-3 left-0 right-0 text-center">
-              <p className="text-white/80 text-[10px] font-mono tracking-widest uppercase">{label}</p>
-              {cameraLabel && (
-                <p className="text-white/40 text-[9px] font-mono mt-0.5 truncate px-3">
-                  {cameraLabel}
-                </p>
-              )}
-            </div>
           </>
         )}
         <canvas ref={canvasRef} className="hidden" />

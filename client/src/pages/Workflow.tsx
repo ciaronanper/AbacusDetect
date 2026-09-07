@@ -756,10 +756,9 @@ export default function Workflow() {
 
       case "nurse-scan":
         return (
-          <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
-            <StatusCard icon={UserCheck} title="Scan Nurse QR" description="Point the rear camera at the nurse ID QR code" />
+          <div className="flex flex-col items-center justify-center h-full gap-6 w-full max-w-2xl mx-auto">
+            <h2 className="text-2xl font-display font-bold">Scan Nurse ID</h2>
             <QrScanner
-              label="Scanning Nurse QR"
               onScan={(text) => {
                 setNurseId(text);
                 setPhase("patient-scan");
@@ -770,10 +769,9 @@ export default function Workflow() {
 
       case "patient-scan":
         return (
-          <div className="flex flex-col items-center justify-center h-full gap-6 max-w-sm mx-auto">
-            <StatusCard icon={User} title="Scan Patient QR" description="Point the rear camera at the patient wristband QR code" />
+          <div className="flex flex-col items-center justify-center h-full gap-6 w-full max-w-2xl mx-auto">
+            <h2 className="text-2xl font-display font-bold">Scan Patient ID</h2>
             <QrScanner
-              label="Scanning Patient QR"
               onScan={(text) => {
                 setPatientId(text);
                 setPhase("running");
