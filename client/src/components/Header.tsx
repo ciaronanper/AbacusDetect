@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export function Header({ onLogoClick, connected = false }: HeaderProps) {
   return (
-    <header className="fixed top-0 left-0 right-0 h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] bg-background/80 backdrop-blur-md z-50 px-4 flex items-center justify-between border-b border-border/50">
+    <header className="fixed top-0 left-0 right-0 h-[calc(3.5rem+var(--app-safe-top))] pt-[var(--app-safe-top)] bg-background/80 backdrop-blur-md z-50 px-4 flex items-center justify-between border-b border-border/50">
       <button
         onClick={onLogoClick}
         className="flex items-center gap-2 hover:opacity-70 transition-opacity active:scale-95"
