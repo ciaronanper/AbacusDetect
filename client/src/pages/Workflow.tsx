@@ -11,7 +11,6 @@ import {
   Loader2,
   AlertTriangle,
   Eye,
-  Usb,
   Bug,
   X,
   Send,
@@ -735,12 +734,7 @@ export default function Workflow() {
             <img src={logoPng} alt="Abacus Labs" className="h-36 w-auto mx-auto object-contain" />
             <div className="w-full space-y-3">
               <ActionButton fullWidth onClick={connectUsb} disabled={reader.connecting} data-testid="button-connect-usb">
-                <Usb className="w-5 h-5 mr-2" />
-                {reader.connecting ? "Starting…" : "Start Real Test"}
-              </ActionButton>
-              <ActionButton variant="outline" fullWidth onClick={connectSimulator} disabled={reader.connecting} data-testid="button-connect-simulator">
-                <Bug className="w-5 h-5 mr-2" />
-                Simulator
+                {reader.connecting ? "Starting…" : "Start Test"}
               </ActionButton>
             </div>
             <p className="mt-auto pt-10 text-center font-display text-xl font-semibold leading-tight tracking-tight text-foreground">
@@ -800,6 +794,18 @@ export default function Workflow() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      {phase === "connect" && (
+        <button
+          onClick={connectSimulator}
+          disabled={reader.connecting}
+          aria-label="Simulator"
+          data-testid="button-connect-simulator"
+          className="fixed bottom-4 left-4 z-50 w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg hover:bg-slate-700 disabled:opacity-50"
+        >
+          <Bug className="w-5 h-5" />
+        </button>
+      )}
 
       {reader.kind === "simulator" && phase !== "connect" && (
         <SimulatorPanel
