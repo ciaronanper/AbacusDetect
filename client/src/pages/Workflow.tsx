@@ -582,19 +582,6 @@ export default function Workflow() {
       );
     }
     const value = parsed.value;
-    const units = RESULT_DISPLAY_UNITS;
-
-    type Band = { label: string; bg: string; border: string; textColor: string; badgeColor: string; zone: string };
-    const band: Band =
-      value < 10
-        ? { label: "Very Low", bg: "bg-green-50", border: "border-green-200", textColor: "text-green-900", badgeColor: "bg-green-800", zone: "Zone 5" }
-        : value < 50
-        ? { label: "Low", bg: "bg-green-50", border: "border-green-200", textColor: "text-green-700", badgeColor: "bg-green-500", zone: "Zone 4" }
-        : value <= 200
-        ? { label: "Moderate", bg: "bg-yellow-50", border: "border-yellow-200", textColor: "text-yellow-700", badgeColor: "bg-yellow-500", zone: "Zone 3" }
-        : value <= 300
-        ? { label: "High", bg: "bg-orange-50", border: "border-orange-200", textColor: "text-orange-700", badgeColor: "bg-orange-500", zone: "Zone 2" }
-        : { label: "Very High", bg: "bg-red-50", border: "border-red-200", textColor: "text-red-700", badgeColor: "bg-red-500", zone: "Zone 1" };
 
     // Map the hidden 1–550 mg/L mock range linearly to a discrete, unitless
     // Abacus Index score from 0.1–100.0.
@@ -630,13 +617,6 @@ export default function Workflow() {
                 <span>{resultAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
               </div>
             )}
-          </div>
-
-          <div className={cn("p-4 rounded-xl border-2 text-center", band.bg, band.border)} data-testid="card-probability">
-            <span className="text-sm font-bold uppercase opacity-60 block mb-2">SAA.2 Score</span>
-            <span className={cn("inline-block text-xl font-bold px-5 py-1.5 rounded-full text-white", band.badgeColor)} data-testid="text-sbi-probability">
-              {value.toFixed(1)} {units}
-            </span>
           </div>
 
           <div className="bg-card border border-border rounded-xl p-5 shadow-sm" data-testid="card-severity-gauge">
