@@ -738,7 +738,6 @@ export default function Workflow() {
                 onClick={connectUsb}
                 disabled={reader.connecting}
                 data-testid="button-connect-usb"
-                className="h-20"
               >
                 {reader.connecting ? "Starting…" : "Start Test"}
               </ActionButton>
@@ -784,7 +783,7 @@ export default function Workflow() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      <Header onLogoClick={goHome} connected={reader.connected} />
+      <Header onLogoClick={goHome} connected={reader.connected} home={phase === "connect"} />
 
       <main className="flex-1 px-6 pt-[calc(5rem+var(--app-safe-top))] pb-8 safe-area-pb overflow-y-auto">
         <AnimatePresence mode="wait">
