@@ -661,14 +661,15 @@ export default function Workflow() {
             </div>
             <div className="flex mt-3">
               {[
-                { range: "0.1–25.0", label: "Definite Viral" },
-                { range: "25.1–50.0", label: "Probable Viral" },
-                { range: "50.1–75.0", label: "Probable Bacterial" },
-                { range: "75.1–100.0", label: "Definite Bacterial" },
-              ].map(({ range, label }) => (
+                { range: "0.1–25.0", first: "Definite", second: "Viral" },
+                { range: "25.1–50.0", first: "Probable", second: "Viral" },
+                { range: "50.1–75.0", first: "Probable", second: "Bacterial" },
+                { range: "75.1–100.0", first: "Definite", second: "Bacterial" },
+              ].map(({ range, first, second }) => (
                 <div key={range} className="flex-1 text-center text-xs leading-tight font-bold text-foreground px-1 break-words">
                   <span className="block">{range}</span>
-                  <span className="block mt-1.5">{label}</span>
+                  <span className="block mt-1.5">{first}</span>
+                  <span className="block">{second}</span>
                 </div>
               ))}
             </div>
