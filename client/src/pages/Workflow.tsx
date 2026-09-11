@@ -635,7 +635,7 @@ export default function Workflow() {
           <div className={cn("p-4 rounded-xl border-2 text-center", band.bg, band.border)} data-testid="card-probability">
             <span className="text-xs font-bold uppercase opacity-60 block mb-2">SAA Score</span>
             <span className={cn("inline-block text-xl font-bold px-5 py-1.5 rounded-full text-white", band.badgeColor)} data-testid="text-sbi-probability">
-              {value.toFixed(1)}
+              {value.toFixed(1)} {units}
             </span>
           </div>
 
