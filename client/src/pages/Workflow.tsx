@@ -633,18 +633,15 @@ export default function Workflow() {
           </div>
 
           <div className={cn("p-4 rounded-xl border-2 text-center", band.bg, band.border)} data-testid="card-probability">
-            <span className="text-xs font-bold uppercase opacity-60 block mb-2">Probability of SBI</span>
+            <span className="text-xs font-bold uppercase opacity-60 block mb-2">SAA Score</span>
             <span className={cn("inline-block text-xl font-bold px-5 py-1.5 rounded-full text-white", band.badgeColor)} data-testid="text-sbi-probability">
-              {band.label}
+              {value.toFixed(1)}
             </span>
           </div>
 
           <div className="bg-card border border-border rounded-xl p-5 shadow-sm" data-testid="card-severity-gauge">
             <div className="flex items-center justify-between mb-5">
-              <div>
-                <span className="text-sm font-bold text-foreground uppercase tracking-wider block">Abacus Index</span>
-                <span className="text-xs text-muted-foreground font-semibold">SAA Score: {value.toFixed(1)}</span>
-              </div>
+              <span className="text-sm font-bold text-foreground uppercase tracking-wider block">Abacus Index</span>
               <span className="text-sm font-bold px-3 py-1 rounded-full text-white bg-gray-700">
                 {abacusIndex.toFixed(1)} · {gaugeLabel}
               </span>
