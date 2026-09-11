@@ -7,7 +7,7 @@ interface HeaderProps {
 
 export function Header({ onLogoClick, connected = false }: HeaderProps) {
   return (
-    <header className="fixed top-0 left-0 right-0 h-[calc(3.5rem+var(--app-safe-top))] pt-[var(--app-safe-top)] bg-background/80 backdrop-blur-md z-50 px-4 flex items-center justify-between border-b border-border/50">
+    <header className="relative fixed top-0 left-0 right-0 h-[calc(3.5rem+var(--app-safe-top))] pt-[var(--app-safe-top)] bg-background/80 backdrop-blur-md z-50 px-4 flex items-center justify-between border-b border-border/50">
       <button
         onClick={onLogoClick}
         className="flex items-center gap-2 hover:opacity-70 transition-opacity active:scale-95"
@@ -17,6 +17,10 @@ export function Header({ onLogoClick, connected = false }: HeaderProps) {
           <span className="font-normal">Detect</span>
         </span>
       </button>
+      <span className="absolute left-1/2 -translate-x-1/2 font-display text-2xl text-primary tracking-tight pointer-events-none">
+        <span className="font-bold">Abacus</span>
+        <span className="font-normal">Detect</span>
+      </span>
       <div className="flex items-center gap-3">
         <span
           className={`flex items-center gap-1 text-xs font-medium ${

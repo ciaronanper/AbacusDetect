@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import jsQR from "jsqr";
-import { Camera, Keyboard } from "lucide-react";
+import { Keyboard } from "lucide-react";
 
 interface QrScannerProps {
   /** Called once with the decoded ID text (or manually entered value). */
@@ -138,6 +138,7 @@ export function QrScanner({ onScan }: QrScannerProps) {
   const [error, setError] = useState<string | null>(null);
   const [manual, setManual] = useState(false);
   const [manualValue, setManualValue] = useState("");
+  const [cameraReady, setCameraReady] = useState(false);
 
   /** Stop the RAF loop and release the camera. Safe to call multiple times. */
   const stopCamera = useCallback(() => {
@@ -151,6 +152,7 @@ export function QrScanner({ onScan }: QrScannerProps) {
 
   useEffect(() => {
     doneRef.current = false;
+    setCameraReady(false);
     let cancelled = false;
 
     const finish = (text: string) => {
@@ -308,6 +310,7 @@ export function QrScanner({ onScan }: QrScannerProps) {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play().catch(() => {});
+          if (!cancelled) setCameraReady(true);
         }
         rafRef.current = requestAnimationFrame(tick);
       } catch {
@@ -340,11 +343,10 @@ export function QrScanner({ onScan }: QrScannerProps) {
 
   return (
     <div className="flex flex-col items-center gap-4 w-full">
-      <div className="relative w-full max-w-sm h-[58vh] min-h-[360px] max-h-[620px] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-800">
+      <div className="relative w-full max-w-sm h-[58vh] min-h-[360px] max-h-[620px] bg-white rounded-2xl overflow-hidden shadow-2xl border-4 border-slate-800">
         {error ? (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-white bg-slate-800">
-            <Camera className="w-12 h-12 opacity-40" />
-            <p className="text-xs opacity-70">{error}</p>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 p-6 text-center text-slate-700 bg-white">
+            <p className="text-xs">{error}</p>
           </div>
         ) : (
           <>
@@ -353,9 +355,11 @@ export function QrScanner({ onScan }: QrScannerProps) {
               autoPlay
               playsInline
               muted
-              className="absolute inset-0 w-full h-full object-cover"
+              className={`absolute inset-0 w-full h-full object-cover transition-opacity ${cameraReady ? "opacity-100" : "opacity-0"}`}
             />
-            <div className="absolute top-0 left-0 right-0 h-1 bg-primary/80 shadow-[0_0_20px_rgba(58,174,82,0.6)] animate-scan" />
+            {cameraReady && (
+              <div className="absolute top-0 left-0 right-0 h-1 bg-primary/80 shadow-[0_0_20px_rgba(58,174,82,0.6)] animate-scan" />
+            )}
           </>
         )}
         <canvas ref={canvasRef} className="hidden" />
