@@ -56,6 +56,10 @@
   .safe-area-pb {
     padding-bottom: env(safe-area-inset-bottom);
   }
+
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top);
+  }
   
   .glass-panel {
     @apply bg-white/80 backdrop-blur-md border border-white/20 shadow-lg;

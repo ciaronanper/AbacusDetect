@@ -780,9 +780,9 @@ export default function Workflow() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      <Header onLogoClick={goHome} connected={reader.connected} battery={readerState.battery} />
+      <Header onLogoClick={goHome} connected={reader.connected} />
 
-      <main className="flex-1 px-6 pt-20 pb-8 safe-area-pb overflow-y-auto">
+      <main className="flex-1 px-6 pt-[calc(5rem+env(safe-area-inset-top))] pb-8 safe-area-pb overflow-y-auto">
         <AnimatePresence mode="wait">
           <motion.div
             key={`${phase}-${phase === "running" ? screenKey : ""}`}
