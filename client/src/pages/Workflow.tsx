@@ -743,6 +743,10 @@ export default function Workflow() {
                 Simulator
               </ActionButton>
             </div>
+            <p className="mt-auto pt-10 text-center font-display text-xl font-semibold leading-tight tracking-tight text-foreground">
+              <span className="block">A New Kind of Number</span>
+              <span className="block text-primary">for a New Level of Certainty</span>
+            </p>
           </div>
         );
 
