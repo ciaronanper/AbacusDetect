@@ -730,7 +730,7 @@ export default function Workflow() {
     switch (phase) {
       case "connect":
         return (
-          <div className="flex flex-col items-center justify-center h-full gap-8 max-w-sm mx-auto">
+          <div className="flex flex-col items-center justify-center h-full gap-12 max-w-sm mx-auto">
             <p className="text-center font-display text-xl font-semibold leading-tight tracking-tight text-foreground">
               <span className="block">A New Kind of Number</span>
               <span className="block text-primary">for a New Level of Certainty</span>
