@@ -641,7 +641,10 @@ export default function Workflow() {
 
           <div className="bg-card border border-border rounded-xl p-5 shadow-sm" data-testid="card-severity-gauge">
             <div className="flex items-center justify-between mb-5">
-              <span className="text-sm font-bold text-foreground uppercase tracking-wider">Abacus Index</span>
+              <div>
+                <span className="text-sm font-bold text-foreground uppercase tracking-wider block">Abacus Index</span>
+                <span className="text-xs text-muted-foreground font-semibold">SAA Score: {value.toFixed(1)}</span>
+              </div>
               <span className="text-sm font-bold px-3 py-1 rounded-full text-white bg-gray-700">
                 {abacusIndex.toFixed(1)} · {gaugeLabel}
               </span>
