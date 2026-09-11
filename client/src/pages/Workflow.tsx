@@ -800,7 +800,6 @@ export default function Workflow() {
       {reader.kind === "simulator" && (
         <SimulatorPanel
           open={devOpen}
-          onToggle={() => setDevOpen((o) => !o)}
           logs={reader.logs}
           onInject={reader.inject}
           onClear={reader.clearLogs}
@@ -816,7 +815,6 @@ export default function Workflow() {
 
 interface SimulatorPanelProps {
   open: boolean;
-  onToggle: () => void;
   logs: string[];
   onInject: (line: string) => void;
   onClear: () => void;
@@ -834,7 +832,7 @@ const QUICK_MESSAGES: Array<{ label: string; lines: string[] }> = [
   { label: "Power off", lines: ["SCREEN:POWEROFF"] },
 ];
 
-function SimulatorPanel({ open, onToggle, logs, onInject, onClear }: SimulatorPanelProps) {
+function SimulatorPanel({ open, logs, onInject, onClear }: SimulatorPanelProps) {
   const [custom, setCustom] = useState("");
 
   const injectAll = (lines: string[]) => lines.forEach((l) => onInject(l));
@@ -854,15 +852,6 @@ function SimulatorPanel({ open, onToggle, logs, onInject, onClear }: SimulatorPa
 
   return (
     <>
-      <button
-        onClick={onToggle}
-        aria-label="Toggle simulator"
-        data-testid="button-dev-toggle"
-        className="fixed bottom-4 left-4 z-50 w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg hover:bg-slate-700"
-      >
-        {open ? <X className="w-5 h-5" /> : <Bug className="w-5 h-5" />}
-      </button>
-
       <AnimatePresence>
         {open && (
           <motion.div
