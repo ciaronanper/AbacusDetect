@@ -1,4 +1,5 @@
 import { Usb } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
 
 interface HeaderProps {
   onLogoClick?: () => void;
@@ -9,14 +10,39 @@ interface HeaderProps {
 export function Header({ onLogoClick, connected = false, home = false }: HeaderProps) {
   return (
     <header className="relative fixed top-0 left-0 right-0 h-[calc(3.5rem+var(--app-safe-top))] pt-[var(--app-safe-top)] bg-background/80 backdrop-blur-md z-50 px-4 flex items-center justify-between border-b border-border/50">
-      <span
-        className={`absolute font-display text-primary tracking-tight pointer-events-none ${
-          home ? "left-4 text-base" : "left-1/2 -translate-x-1/2 text-2xl"
-        }`}
-      >
-        <span className="font-bold">Abacus</span>
-        <span className="font-normal">Detect</span>
-      </span>
+      <AnimatePresence initial={false} mode="wait">
+        {home ? (
+          <motion.button
+            key="home-wordmark"
+            type="button"
+            onClick={onLogoClick}
+            aria-label="Return to home"
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -8 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+            className="absolute left-4 border-0 bg-transparent p-0 font-display text-base text-primary tracking-tight cursor-pointer"
+          >
+            <span className="font-bold">Abacus</span>
+            <span className="font-normal">Detect</span>
+          </motion.button>
+        ) : (
+          <motion.button
+            key="app-wordmark"
+            type="button"
+            onClick={onLogoClick}
+            aria-label="Return to home"
+            initial={{ opacity: 0, x: 8 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 8 }}
+            transition={{ duration: 0.35, ease: "easeOut" }}
+            className="absolute left-1/2 -translate-x-1/2 border-0 bg-transparent p-0 font-display text-2xl text-primary tracking-tight cursor-pointer"
+          >
+            <span className="font-bold">Abacus</span>
+            <span className="font-normal">Detect</span>
+          </motion.button>
+        )}
+      </AnimatePresence>
       <div className="ml-auto flex items-center gap-3">
         <span
           className={`flex items-center gap-1 text-xs font-medium ${
