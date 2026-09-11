@@ -42,6 +42,7 @@ import logoPng from "@assets/Vertical_logo_bgtransparent_1769613129480.png";
 type Phase = "connect" | "nurse-scan" | "patient-scan" | "running";
 
 const TEST_DURATION_SECONDS = 300; // 5-minute assay countdown (visual)
+const RESULT_DISPLAY_UNITS = "mg/L";
 
 // Generate the mock SAA2 reading in its native mg/L range. It remains hidden
 // from the result screen and is mapped to the unitless Abacus Index below.
@@ -154,7 +155,7 @@ export default function Workflow() {
         nurseId: nurseId || "UNKNOWN",
         patientId: patientId || "UNKNOWN",
         value: parsed.value,
-        units: parsed.units || "mg/L",
+         units: RESULT_DISPLAY_UNITS,
         level,
         interpretation,
       })
@@ -330,7 +331,7 @@ export default function Workflow() {
             nurseId: nurseId || "UNKNOWN",
             patientId: patientId || "UNKNOWN",
             value: parsed.value,
-            units: parsed.units || "mg/L",
+             units: RESULT_DISPLAY_UNITS,
             resultAt: resultAt ?? new Date(),
             voiceNoteCount: voiceNotes.length,
           });
@@ -581,7 +582,7 @@ export default function Workflow() {
       );
     }
     const value = parsed.value;
-    const units = parsed.units || "mg/L";
+    const units = RESULT_DISPLAY_UNITS;
 
     type Band = { label: string; bg: string; border: string; textColor: string; badgeColor: string; zone: string };
     const band: Band =
