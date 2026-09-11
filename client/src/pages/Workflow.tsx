@@ -731,16 +731,16 @@ export default function Workflow() {
       case "connect":
         return (
           <div className="flex flex-col items-center justify-center h-full gap-12 max-w-sm mx-auto">
-            <p className="text-center font-display text-xl font-semibold leading-tight tracking-tight text-foreground">
-              <span className="block">A New Kind of Number</span>
-              <span className="block text-primary">for a New Level of Certainty</span>
-            </p>
+            <img src={logoPng} alt="Abacus Labs" className="h-36 w-auto mx-auto object-contain" />
             <div className="w-full space-y-3">
               <ActionButton fullWidth onClick={connectUsb} disabled={reader.connecting} data-testid="button-connect-usb">
                 {reader.connecting ? "Starting…" : "Start Test"}
               </ActionButton>
             </div>
-            <img src={logoPng} alt="Abacus Labs" className="h-36 w-auto mx-auto object-contain" />
+            <p className="text-center font-display text-xl font-semibold leading-tight tracking-tight text-foreground">
+              <span className="block">A New Kind of Number</span>
+              <span className="block text-primary">for a New Level of Certainty</span>
+            </p>
           </div>
         );
 
