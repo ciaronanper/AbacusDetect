@@ -37,6 +37,12 @@
 }
 
 @layer base {
+  #root {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+  }
+
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
     font-family: var(--font-sans);
@@ -45,6 +51,20 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
     @apply font-bold tracking-tight text-foreground;
+  }
+}
+
+@media (min-width: 500px) {
+  body {
+    background: hsl(208 16% 92%);
+  }
+
+  #root {
+    max-width: 390px;
+    margin: 0 auto;
+    overflow: hidden;
+    background: hsl(var(--background));
+    box-shadow: 0 0 32px rgb(15 23 42 / 0.12);
   }
 }
 

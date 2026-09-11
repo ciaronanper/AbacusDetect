@@ -9,7 +9,7 @@ interface HeaderProps {
 
 export function Header({ onLogoClick, connected = false, home = false }: HeaderProps) {
   return (
-    <header className="relative fixed top-0 left-0 right-0 h-[calc(3.5rem+var(--app-safe-top))] pt-[var(--app-safe-top)] bg-background/80 backdrop-blur-md z-50 px-4 flex items-center justify-between border-b border-border/50">
+    <header className="absolute top-0 left-0 right-0 h-[calc(3.5rem+var(--app-safe-top))] pt-[var(--app-safe-top)] bg-background/80 backdrop-blur-md z-50 px-4 flex items-center justify-between border-b border-border/50">
       <AnimatePresence initial={false} mode="wait">
         {home ? (
           <motion.button
@@ -36,7 +36,7 @@ export function Header({ onLogoClick, connected = false, home = false }: HeaderP
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: 8 }}
             transition={{ duration: 0.35, ease: "easeOut" }}
-            className="absolute left-1/2 -translate-x-1/2 border-0 bg-transparent p-0 font-display text-2xl text-primary tracking-tight cursor-pointer"
+            className="absolute inset-x-0 mx-auto w-max border-0 bg-transparent p-0 font-display text-2xl text-primary tracking-tight cursor-pointer"
           >
             <span className="font-bold">Abacus</span>
             <span className="font-normal">Detect</span>

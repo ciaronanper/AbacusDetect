@@ -782,7 +782,7 @@ export default function Workflow() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
+    <div className="relative min-h-screen bg-background text-foreground flex flex-col font-sans">
       <Header onLogoClick={goHome} connected={reader.connected} home={phase === "connect"} />
 
       <main className="flex-1 px-6 pt-[calc(5rem+var(--app-safe-top))] pb-8 safe-area-pb overflow-y-auto">
@@ -806,7 +806,7 @@ export default function Workflow() {
           disabled={reader.connecting}
           aria-label="Simulator"
           data-testid="button-connect-simulator"
-          className="fixed bottom-8 left-4 z-50 w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg hover:bg-slate-700 disabled:opacity-50"
+          className="absolute bottom-8 left-4 z-50 w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg hover:bg-slate-700 disabled:opacity-50"
         >
           <Bug className="w-5 h-5" />
         </button>
@@ -873,7 +873,7 @@ function SimulatorPanel({ open, onToggle, logs, onInject, onClear }: SimulatorPa
         onClick={onToggle}
         aria-label="Toggle simulator"
         data-testid="button-dev-toggle"
-        className="fixed bottom-8 left-4 z-50 w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg hover:bg-slate-700"
+        className="absolute bottom-8 left-4 z-50 w-11 h-11 rounded-full bg-slate-800 text-white flex items-center justify-center shadow-lg hover:bg-slate-700"
       >
         {open ? <X className="w-5 h-5" /> : <Bug className="w-5 h-5" />}
       </button>
@@ -885,7 +885,7 @@ function SimulatorPanel({ open, onToggle, logs, onInject, onClear }: SimulatorPa
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "tween", duration: 0.25 }}
-            className="fixed bottom-0 left-0 right-0 z-40 bg-slate-900 text-white rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col"
+            className="absolute bottom-0 left-0 right-0 z-40 bg-slate-900 text-white rounded-t-2xl shadow-2xl max-h-[70vh] flex flex-col"
           >
             <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
               <span className="font-bold text-sm">Reader Simulator</span>
