@@ -735,12 +735,12 @@ export default function Workflow() {
               <span className="block">A New Kind of Number</span>
               <span className="block text-primary">for a New Level of Certainty</span>
             </p>
-            <img src={logoPng} alt="Abacus Labs" className="h-36 w-auto mx-auto object-contain" />
             <div className="w-full space-y-3">
               <ActionButton fullWidth onClick={connectUsb} disabled={reader.connecting} data-testid="button-connect-usb">
                 {reader.connecting ? "Starting…" : "Start Test"}
               </ActionButton>
             </div>
+            <img src={logoPng} alt="Abacus Labs" className="h-36 w-auto mx-auto object-contain" />
           </div>
         );
 
