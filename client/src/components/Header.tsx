@@ -12,7 +12,10 @@ export function Header({ onLogoClick, connected = false }: HeaderProps) {
         onClick={onLogoClick}
         className="flex items-center gap-2 hover:opacity-70 transition-opacity active:scale-95"
       >
-        <span className="font-display font-bold text-primary tracking-tight">AbacusDetect</span>
+        <span className="font-display text-2xl text-primary tracking-tight">
+          <span className="font-bold">Abacus</span>
+          <span className="font-normal">Detect</span>
+        </span>
       </button>
       <div className="flex items-center gap-3">
         <span
